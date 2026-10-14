@@ -9,7 +9,8 @@ const eslintBin = (process.env.PATH || "")
   .find((candidate) => fs.existsSync(candidate));
 if (!eslintBin) throw new Error("ESLint executable was not found on PATH.");
 const toolModules = path.resolve(path.dirname(eslintBin), "..");
-const tsParser = require(path.join(toolModules, "@typescript-eslint/parser"));
+const tseslint = require(path.join(toolModules, "typescript-eslint"));
+const tsParser = tseslint.parser;
 
 module.exports = [
   {
