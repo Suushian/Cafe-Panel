@@ -28,6 +28,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Apply migrations to a clean SQLite database
+        run: npx prisma migrate deploy
+
       - name: Unit and SQLite backup smoke tests
         run: npm test
 
