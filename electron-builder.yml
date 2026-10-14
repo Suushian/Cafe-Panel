@@ -1,0 +1,35 @@
+appId: com.suushian.cafepanel
+productName: Cafe Panel
+asar: false
+electronVersion: 37.2.6
+directories:
+  output: release
+files:
+  - electron/main.cjs
+  - package.json
+  - next.config.js
+  - .next/**/*
+  - src/**/*
+  - public/**/*
+  - prisma/**/*
+  - data/cafe.db
+  - "!data/backups/**/*"
+  - "!tests/**/*"
+  - "!launch/**/*"
+  - "!scripts/**/*"
+extraMetadata:
+  version: 1.0.0
+  main: electron/main.cjs
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  artifactName: Cafe-Panel-Setup-${version}.${ext}
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Cafe Panel
