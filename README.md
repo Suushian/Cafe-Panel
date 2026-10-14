@@ -134,6 +134,8 @@ scripts\ — اسکریپت‌های توسعه
 
 npm install
 npm run dev
+npm test
+npm run typecheck
 npm run build
 npm run start
 npx prisma migrate dev --name <name>

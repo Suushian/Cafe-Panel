@@ -28,6 +28,9 @@ jobs:
       - name: Generate Prisma client
         run: npx prisma generate
 
+      - name: Unit and SQLite backup smoke tests
+        run: npm test
+
       - name: Type-check
         run: npm run typecheck
 
