@@ -16,23 +16,17 @@ function backupsDir(): string {
   return path.join(process.cwd(), "data", "backups");
 }
 
-function dbPath(): string {
-  return path.join(process.cwd(), "data", "cafe.db");
-}
-
-function todayISO(): string {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 function ensureDir(): void {
   const dir = backupsDir();
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
+}
+
+function backupDate(filename: string): string | null {
+  // Daily: cafe-YYYY-MM-DD.db; manual: cafe-YYYY-MM-DD_HHMMSS.db
+  const match = filename.match(/^cafe-(\d{4}-\d{2}-\d{2})(?:_\d{6})?\.db$/);
+  return match?.[1] ?? null;
 }
 
 export async function listBackups(): Promise<BackupInfo[]> {
@@ -42,19 +36,23 @@ export async function listBackups(): Promise<BackupInfo[]> {
 
   const result: BackupInfo[] = [];
   for (const filename of entries) {
+    const date = backupDate(filename);
+    if (!date) continue;
+
     const full = path.join(dir, filename);
     const stat = fs.statSync(full);
-    const m = filename.match(/^cafe-(\d{4}-\d{2}-\d{2})\.db$/);
-    if (!m) continue;
+    if (!stat.isFile()) continue;
+
     result.push({
       filename,
-      date: m[1],
+      date,
       sizeBytes: stat.size,
       createdAt: stat.mtime,
     });
   }
 
-  result.sort((a, b) => b.date.localeCompare(a.date));
+  // mtime also distinguishes multiple manual backups made on the same day.
+  result.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   return result;
 }
 
@@ -64,17 +62,22 @@ export async function getLastBackup(): Promise<BackupInfo | null> {
 }
 
 async function createBackupFile(targetPath: string): Promise<void> {
-  // Try VACUUM INTO first — SQLite's official consistent backup method.
-  // Falls back to fs.copyFileSync if raw query fails (e.g. adapter limitation).
+  // VACUUM INTO produces a consistent snapshot. Do not silently fall back to
+  // copying a live SQLite file: that copy may be inconsistent or incomplete.
+  const safe = targetPath.replace(/\\/g, "/").replace(/'/g, "''");
   try {
-    const safe = targetPath.replace(/\\/g, "/").replace(/'/g, "''");
     await prisma.$executeRawUnsafe(`VACUUM INTO '${safe}'`);
-    return;
   } catch (err) {
-    console.warn("VACUUM INTO failed, falling back to copyFile:", err);
+    // Remove a partial target if SQLite created one before reporting failure.
+    try {
+      if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
+    } catch {
+      // Preserve the original backup error.
+    }
+    throw new Error("SQLite VACUUM INTO backup failed; no fallback copy was made.", {
+      cause: err,
+    });
   }
-
-  fs.copyFileSync(dbPath(), targetPath);
 }
 
 function cleanupOldBackups(): number {
@@ -92,7 +95,7 @@ function cleanupOldBackups(): number {
         fs.unlinkSync(full);
         removed++;
       } catch {
-        // ignore
+        // Ignore individual cleanup failures; preserve remaining backups.
       }
     }
   }
@@ -108,8 +111,8 @@ export type EnsureResult = {
 export async function ensureDailyBackup(): Promise<EnsureResult | null> {
   try {
     ensureDir();
-    const date = todayISO();
-    const filename = `cafe-${date}.db`;
+    const date = new Date();
+    const filename = `cafe-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}.db`;
     const fullPath = path.join(backupsDir(), filename);
 
     if (fs.existsSync(fullPath)) {
