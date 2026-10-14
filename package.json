@@ -8,7 +8,7 @@
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
-    "lint": "npm exec --yes --package=eslint@9.39.1 --package=@typescript-eslint/parser@8.46.4 -- eslint ."
+    "lint": "npm exec --yes --package=eslint@9.39.1 --package=@typescript-eslint/parser@8.46.2 -- eslint ."
   },
   "dependencies": {
     "@fontsource/vazirmatn": "^5.3.0",
