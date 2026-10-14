@@ -1,16 +1,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-// npm exec places ephemeral tool binaries on PATH. Resolve the parser from
-// that same installation so linting works without mutating package-lock.json.
-const eslintBin = (process.env.PATH || "")
-  .split(path.delimiter)
-  .map((dir) => path.join(dir, process.platform === "win32" ? "eslint.cmd" : "eslint"))
-  .find((candidate) => fs.existsSync(candidate));
-if (!eslintBin) throw new Error("ESLint executable was not found on PATH.");
-const toolModules = path.resolve(path.dirname(eslintBin), "..");
-const tseslint = require(path.join(toolModules, "typescript-eslint"));
-const tsParser = tseslint.parser;
+const tsParser = require("@typescript-eslint/parser");
 
 module.exports = [
   {
