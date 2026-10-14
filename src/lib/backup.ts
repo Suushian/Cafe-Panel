@@ -2,6 +2,7 @@ import "server-only";
 import fs from "node:fs";
 import path from "node:path";
 import { prisma } from "@/lib/prisma";
+import { backupDateFromFilename } from "@/lib/backup-naming";
 
 const RETENTION_DAYS = 30;
 
@@ -23,12 +24,6 @@ function ensureDir(): void {
   }
 }
 
-function backupDate(filename: string): string | null {
-  // Daily: cafe-YYYY-MM-DD.db; manual: cafe-YYYY-MM-DD_HHMMSS.db
-  const match = filename.match(/^cafe-(\d{4}-\d{2}-\d{2})(?:_\d{6})?\.db$/);
-  return match?.[1] ?? null;
-}
-
 export async function listBackups(): Promise<BackupInfo[]> {
   ensureDir();
   const dir = backupsDir();
@@ -36,7 +31,7 @@ export async function listBackups(): Promise<BackupInfo[]> {
 
   const result: BackupInfo[] = [];
   for (const filename of entries) {
-    const date = backupDate(filename);
+    const date = backupDateFromFilename(filename);
     if (!date) continue;
 
     const full = path.join(dir, filename);
