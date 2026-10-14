@@ -27,4 +27,14 @@ test("libSQL can create and integrity-check a consistent VACUUM INTO backup", as
   const rows = await backup.execute("SELECT value FROM smoke_test");
   assert.equal(rows.rows.length, 1);
   assert.equal(rows.rows[0]?.value, "backup-ok");
+
+  // Simulate the documented restore procedure: place the backup at the active DB path.
+  const restoredPath = path.join(dir, "restored.db");
+  await fs.copyFile(backupPath, restoredPath);
+  const restored = createClient({ url: `file:${restoredPath}` });
+  t.after(() => restored.close());
+  const restoredIntegrity = await restored.execute("PRAGMA integrity_check");
+  assert.equal(restoredIntegrity.rows[0]?.integrity_check, "ok");
+  const restoredRows = await restored.execute("SELECT value FROM smoke_test");
+  assert.equal(restoredRows.rows[0]?.value, "backup-ok");
 });
