@@ -1,0 +1,16 @@
+node_modules/
+.next/
+out/
+data/*.db
+data/*.db-journal
+.env
+.DS_Store
+*.log
+# Backups
+data/backups/
+# Launcher runtime
+launch/server.log
+launch/assets/*.ico
+# Launcher generated
+launch/assets/cafe-panel.ico
+launch/server.log
