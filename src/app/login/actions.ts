@@ -9,36 +9,41 @@ import {
   setSessionCookie,
 } from "@/lib/auth";
 import type { ActionResult } from "@/lib/types";
+import { prisma } from "@/lib/prisma";
 
-/* Simple in-memory rate limit */
-type Attempt = { count: number; blockedUntil: number | null };
-const attempts = new Map<string, Attempt>();
+/* Persistent rate limit stored in SQLite so restarts do not reset failed attempts. */
+const RATE_LIMIT_ID = "admin";
 const MAX_ATTEMPTS = 5;
-const BLOCK_MS = 60 * 1000; // 1 minute
+const BLOCK_MS = 60 * 1000;
 
-function checkRateLimit(key: string): { ok: true } | { ok: false; retryInSec: number } {
-  const now = Date.now();
-  const a = attempts.get(key);
-  if (!a) return { ok: true };
-  if (a.blockedUntil && a.blockedUntil > now) {
-    return { ok: false, retryInSec: Math.ceil((a.blockedUntil - now) / 1000) };
-  }
+async function checkRateLimit(): Promise<{ ok: true } | { ok: false; retryInSec: number }> {
+  const attempt = await prisma.loginRateLimit.findUnique({ where: { id: RATE_LIMIT_ID } });
+  if (!attempt?.blockedUntil) return { ok: true };
+  const remaining = attempt.blockedUntil.getTime() - Date.now();
+  if (remaining > 0) return { ok: false, retryInSec: Math.ceil(remaining / 1000) };
+  await prisma.loginRateLimit.update({
+    where: { id: RATE_LIMIT_ID },
+    data: { count: 0, blockedUntil: null },
+  });
   return { ok: true };
 }
 
-function recordFailure(key: string) {
-  const now = Date.now();
-  const a = attempts.get(key) ?? { count: 0, blockedUntil: null };
-  a.count += 1;
-  if (a.count >= MAX_ATTEMPTS) {
-    a.blockedUntil = now + BLOCK_MS;
-    a.count = 0;
+async function recordFailure(): Promise<void> {
+  const attempt = await prisma.loginRateLimit.upsert({
+    where: { id: RATE_LIMIT_ID },
+    create: { id: RATE_LIMIT_ID, count: 1 },
+    update: { count: { increment: 1 } },
+  });
+  if (attempt.count >= MAX_ATTEMPTS) {
+    await prisma.loginRateLimit.update({
+      where: { id: RATE_LIMIT_ID },
+      data: { count: 0, blockedUntil: new Date(Date.now() + BLOCK_MS) },
+    });
   }
-  attempts.set(key, a);
 }
 
-function clearFailures(key: string) {
-  attempts.delete(key);
+async function clearFailures(): Promise<void> {
+  await prisma.loginRateLimit.deleteMany({ where: { id: RATE_LIMIT_ID } });
 }
 
 export async function loginAdmin(formData: FormData): Promise<ActionResult> {
@@ -52,8 +57,13 @@ export async function loginAdmin(formData: FormData): Promise<ActionResult> {
     return { success: false, error: "رمز عبور الزامی است." };
   }
 
-  const key = "admin";
-  const rl = checkRateLimit(key);
+  let rl: Awaited<ReturnType<typeof checkRateLimit>>;
+  try {
+    rl = await checkRateLimit();
+  } catch (err) {
+    console.error("login rate limit check failed:", err);
+    return { success: false, error: "خطای موقت در بررسی ورود. دوباره تلاش کن." };
+  }
   if (!rl.ok) {
     return {
       success: false,
@@ -68,11 +78,21 @@ export async function loginAdmin(formData: FormData): Promise<ActionResult> {
 
   const valid = await verifyPassword(password, admin.passwordHash);
   if (!valid) {
-    recordFailure(key);
+    try {
+      await recordFailure();
+    } catch (err) {
+      console.error("login failure counter update failed:", err);
+      return { success: false, error: "خطای موقت در بررسی ورود. دوباره تلاش کن." };
+    }
     return { success: false, error: "رمز عبور نادرست است." };
   }
 
-  clearFailures(key);
+  try {
+    await clearFailures();
+  } catch (err) {
+    console.error("login failure counter reset failed:", err);
+    return { success: false, error: "خطای موقت در ورود. دوباره تلاش کن." };
+  }
 
   try {
     const token = await createSession();

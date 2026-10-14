@@ -82,3 +82,12 @@ model Customer {
   @@index([subscriptionCode])
   @@index([name])
 }
+
+model LoginRateLimit {
+  id           String   @id
+  count        Int      @default(0)
+  blockedUntil DateTime?
+  updatedAt    DateTime @updatedAt
+
+  @@index([blockedUntil])
+}
