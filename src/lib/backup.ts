@@ -1,7 +1,7 @@
 import "server-only";
 import fs from "node:fs";
 import path from "node:path";
-import { prisma } from "@/lib/prisma";
+import { createClient } from "@libsql/client";
 import { backupDateFromFilename } from "@/lib/backup-naming";
 
 const RETENTION_DAYS = 30;
@@ -57,13 +57,18 @@ export async function getLastBackup(): Promise<BackupInfo | null> {
 }
 
 async function createBackupFile(targetPath: string): Promise<void> {
-  // VACUUM INTO produces a consistent snapshot. Do not silently fall back to
-  // copying a live SQLite file: that copy may be inconsistent or incomplete.
+  const dbPath = path.join(process.cwd(), "data", "cafe.db");
+  if (!fs.existsSync(dbPath)) {
+    throw new Error("SQLite database file does not exist.");
+  }
+
+  // Use the same libSQL driver family as Prisma, but a dedicated connection.
+  // This avoids running VACUUM through Prisma's query/transaction wrapper.
+  const client = createClient({ url: `file:${dbPath}` });
   const safe = targetPath.replace(/\\/g, "/").replace(/'/g, "''");
   try {
-    await prisma.$executeRawUnsafe(`VACUUM INTO '${safe}'`);
+    await client.execute(`VACUUM INTO '${safe}'`);
   } catch (err) {
-    // Remove a partial target if SQLite created one before reporting failure.
     try {
       if (fs.existsSync(targetPath)) fs.unlinkSync(targetPath);
     } catch {
@@ -72,6 +77,8 @@ async function createBackupFile(targetPath: string): Promise<void> {
     throw new Error("SQLite VACUUM INTO backup failed; no fallback copy was made.", {
       cause: err,
     });
+  } finally {
+    client.close();
   }
 }
 
