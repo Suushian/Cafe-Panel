@@ -10,6 +10,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/types";
 
+const INITIAL_ADMIN_ID = "initial-admin";
+
 export async function setupAdmin(formData: FormData): Promise<ActionResult> {
   const exists = await adminExists();
   if (exists) {
@@ -34,12 +36,21 @@ export async function setupAdmin(formData: FormData): Promise<ActionResult> {
 
   try {
     const passwordHash = await hashPassword(password);
-    await prisma.admin.create({ data: { passwordHash } });
+
+    // A stable primary key makes concurrent first-run requests race safely:
+    // SQLite can persist only one row with this id.
+    await prisma.admin.create({
+      data: { id: INITIAL_ADMIN_ID, passwordHash },
+    });
 
     const token = await createSession();
     await setSessionCookie(token);
   } catch (err) {
     console.error("setupAdmin failed:", err);
+    // A competing setup request may have created the singleton admin first.
+    if (await adminExists().catch(() => false)) {
+      return { success: false, error: "مدیر قبلاً راه‌اندازی شده است." };
+    }
     return { success: false, error: "خطا در راه‌اندازی. دوباره تلاش کن." };
   }
 
