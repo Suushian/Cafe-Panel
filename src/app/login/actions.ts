@@ -10,6 +10,8 @@ import {
 } from "@/lib/auth";
 import type { ActionResult } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
+import { logger } from "@/lib/logging";
+import { recordBusinessAudit } from "@/lib/logging/business-audit";
 
 /* Persistent rate limit stored in SQLite so restarts do not reset failed attempts. */
 const RATE_LIMIT_ID = "admin";
@@ -61,10 +63,18 @@ export async function loginAdmin(formData: FormData): Promise<ActionResult> {
   try {
     rl = await checkRateLimit();
   } catch (err) {
-    console.error("login rate limit check failed:", err);
+    logger.error("auth.login.rate_limit_check.failed", "Login rate-limit check failed", err);
     return { success: false, error: "خطای موقت در بررسی ورود. دوباره تلاش کن." };
   }
   if (!rl.ok) {
+    logger.warn("auth.login.rate_limited", "Login blocked by rate limit", { retryInSec: rl.retryInSec });
+    await recordBusinessAudit({
+      event: "auth.login.rate_limited",
+      action: "login",
+      entityType: "Admin",
+      result: "failure",
+      metadata: { retryInSec: rl.retryInSec },
+    });
     return {
       success: false,
       error: `تلاش‌های ناموفق زیاد. لطفاً ${rl.retryInSec} ثانیه دیگر دوباره تلاش کن.`,
@@ -81,16 +91,26 @@ export async function loginAdmin(formData: FormData): Promise<ActionResult> {
     try {
       await recordFailure();
     } catch (err) {
-      console.error("login failure counter update failed:", err);
+      logger.error("auth.login.failure_counter.failed", "Login failure counter update failed", err);
       return { success: false, error: "خطای موقت در بررسی ورود. دوباره تلاش کن." };
     }
+    logger.warn("auth.login.failed", "Administrator login rejected", { reason: "invalid_credentials" });
+    await recordBusinessAudit({
+      event: "auth.login.failed",
+      action: "login",
+      entityType: "Admin",
+      entityId: admin.id,
+      actorId: null,
+      result: "failure",
+      metadata: { reason: "invalid_credentials" },
+    });
     return { success: false, error: "رمز عبور نادرست است." };
   }
 
   try {
     await clearFailures();
   } catch (err) {
-    console.error("login failure counter reset failed:", err);
+    logger.error("auth.login.failure_counter_reset.failed", "Login failure counter reset failed", err);
     return { success: false, error: "خطای موقت در ورود. دوباره تلاش کن." };
   }
 
@@ -98,9 +118,18 @@ export async function loginAdmin(formData: FormData): Promise<ActionResult> {
     const token = await createSession();
     await setSessionCookie(token);
   } catch (err) {
-    console.error("loginAdmin failed:", err);
+    logger.error("auth.login.session_creation.failed", "Could not create administrator session", err);
     return { success: false, error: "خطا در ورود. دوباره تلاش کن." };
   }
 
+  await recordBusinessAudit({
+    event: "auth.login.succeeded",
+    action: "login",
+    entityType: "Admin",
+    entityId: admin.id,
+    actorId: admin.id,
+    result: "success",
+  });
+  logger.info("auth.login.succeeded", "Administrator login succeeded", { actorId: admin.id });
   redirect("/menu");
 }

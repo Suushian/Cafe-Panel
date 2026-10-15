@@ -6,6 +6,8 @@ import type { ActionResult } from "@/lib/types";
 import { isOrderStatus, type OrderStatus } from "@/lib/order-status";
 import { isOrderType } from "@/lib/order-type";
 import { isDiscountType, computeDiscountAmount } from "@/lib/discount";
+import { recordBusinessAudit } from "@/lib/logging/business-audit";
+import { logger } from "@/lib/logging";
 
 type CartLine = {
   menuItemId: string;
@@ -176,7 +178,7 @@ export async function createOrder(formData: FormData): Promise<ActionResult> {
   if ("error" in resolved) return { success: false, error: resolved.error };
 
   try {
-    await prisma.order.create({
+    const createdOrder = await prisma.order.create({
       data: {
         totalPrice: resolved.data.totalPrice,
         status: "open",
@@ -191,11 +193,12 @@ export async function createOrder(formData: FormData): Promise<ActionResult> {
       },
     });
 
+    await recordBusinessAudit({ event: "order.created", action: "create", entityType: "Order", entityId: createdOrder.id, result: "success", changes: { totalPrice: createdOrder.totalPrice, status: createdOrder.status, orderType: createdOrder.orderType, discountAmount: createdOrder.discountAmount, itemCount: resolved.data.lines.length } });
     revalidatePath("/orders");
     if (parsed.data.customerId) revalidatePath("/customers");
     return { success: true };
   } catch (err) {
-    console.error("createOrder failed:", err);
+    logger.error("business.action.failed", "createOrder failed", err, { action: "createOrder" });
     return { success: false, error: "خطا در ثبت سفارش. دوباره تلاش کن." };
   }
 }
@@ -249,11 +252,12 @@ export async function updateOrder(formData: FormData): Promise<ActionResult> {
       });
     });
 
+    await recordBusinessAudit({ event: "order.updated", action: "update", entityType: "Order", entityId: orderId, result: "success", changes: { totalPrice: resolved.data.totalPrice, orderType: parsed.data.orderType, discountAmount: resolved.data.discountAmount, itemCount: resolved.data.lines.length } });
     revalidatePath("/orders");
     revalidatePath("/customers");
     return { success: true };
   } catch (err) {
-    console.error("updateOrder failed:", err);
+    logger.error("business.action.failed", "updateOrder failed", err, { action: "updateOrder" });
     return { success: false, error: "خطا در ویرایش سفارش. دوباره تلاش کن." };
   }
 }
@@ -270,14 +274,15 @@ export async function updateOrderStatus(
   }
 
   try {
-    await prisma.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: { status },
     });
+    await recordBusinessAudit({ event: "order.status.updated", action: "update_status", entityType: "Order", entityId: updatedOrder.id, result: "success", changes: { status: updatedOrder.status } });
     revalidatePath("/orders");
     return { success: true };
   } catch (err) {
-    console.error("updateOrderStatus failed:", err);
+    logger.error("business.action.failed", "updateOrderStatus failed", err, { action: "updateOrderStatus" });
     return { success: false, error: "خطا در تغییر وضعیت. دوباره تلاش کن." };
   }
 }

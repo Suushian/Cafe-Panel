@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createClient } from "@libsql/client";
 import { backupDateFromFilename } from "@/lib/backup-naming";
+import { logger } from "@/lib/logging";
 
 const RETENTION_DAYS = 30;
 
@@ -126,7 +127,7 @@ export async function ensureDailyBackup(): Promise<EnsureResult | null> {
 
     return { created: true, filename, removedOld };
   } catch (err) {
-    console.error("ensureDailyBackup failed:", err);
+    logger.error("backup.daily.failed", "Daily database backup failed", err);
     return null;
   }
 }
@@ -159,7 +160,7 @@ export async function createManualBackup(): Promise<BackupInfo | null> {
       createdAt: stat.mtime,
     };
   } catch (err) {
-    console.error("createManualBackup failed:", err);
+    logger.error("backup.manual.failed", "Manual database backup failed", err);
     return null;
   }
 }

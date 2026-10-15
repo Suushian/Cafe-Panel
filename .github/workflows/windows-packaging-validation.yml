@@ -1,0 +1,92 @@
+name: Windows packaging validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "electron/**"
+      - "prisma/**"
+      - "src/lib/logging/**"
+      - "src/lib/backup.ts"
+      - "src/instrumentation.ts"
+      - "electron-builder.yml"
+      - "prisma.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/windows-packaging-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Prepare clean SQLite database
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path data | Out-Null
+          npx prisma migrate deploy
+          if ($LASTEXITCODE -ne 0) { throw "Clean database migration failed." }
+
+      - name: Validate upgrade from the previous migration state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $auditMigration = "prisma/migrations/20261015140000_add_audit_logging"
+          $heldMigration = "prisma/20261015140000_add_audit_logging.validation-hold"
+          $upgradeDb = Join-Path $PWD "data/upgrade-test.db"
+          if (Test-Path $upgradeDb) { Remove-Item $upgradeDb -Force }
+          if (-not (Test-Path $auditMigration)) { throw "Audit migration directory was not found." }
+          try {
+            Move-Item -Path $auditMigration -Destination $heldMigration
+            $env:DATABASE_URL = "file:" + ($upgradeDb -replace "\\", "/")
+            npx prisma migrate deploy
+            if ($LASTEXITCODE -ne 0) { throw "Previous migration state failed to deploy." }
+          }
+          finally {
+            if (Test-Path $heldMigration) {
+              Move-Item -Path $heldMigration -Destination $auditMigration
+            }
+          }
+          npx prisma migrate deploy
+          if ($LASTEXITCODE -ne 0) { throw "Audit migration failed when upgrading an existing migrated database." }
+          Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+
+      - name: Run tests and static validation
+        run: |
+          npm test
+          npm run lint
+          npm run typecheck
+          npm run build
+
+      - name: Install Windows packaging tools
+        run: npm install --no-save --package-lock=false electron@37.2.6 electron-builder@26.0.12
+
+      - name: Build Windows x64 installer
+        run: npx electron-builder --win nsis --x64 --publish never --config electron-builder.yml
+
+      - name: Upload installer for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: cafe-panel-windows-installer
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 7

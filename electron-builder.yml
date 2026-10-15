@@ -6,12 +6,16 @@ directories:
   output: release
 files:
   - electron/main.cjs
+  - electron/logging.cjs
   - package.json
   - next.config.js
   - .next/**/*
   - src/**/*
   - public/**/*
   - prisma/**/*
+  - prisma.config.ts
+  - node_modules/prisma/**/*
+  - node_modules/@prisma/**/*
   - data/cafe.db
   - "!data/backups/**/*"
   - "!tests/**/*"

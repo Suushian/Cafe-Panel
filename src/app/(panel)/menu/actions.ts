@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/categories";
 import type { ActionResult } from "@/lib/types";
+import { recordBusinessAudit } from "@/lib/logging/business-audit";
+import { logger } from "@/lib/logging";
 
 type MenuItemData = {
   name: string;
@@ -54,11 +56,12 @@ export async function createMenuItem(formData: FormData): Promise<ActionResult> 
   if ("error" in parsed) return { success: false, error: parsed.error };
 
   try {
-    await prisma.menuItem.create({ data: parsed.data });
+    const created = await prisma.menuItem.create({ data: parsed.data });
+    await recordBusinessAudit({ event: "menu_item.created", action: "create", entityType: "MenuItem", entityId: created.id, result: "success", changes: { name: created.name, price: created.price, category: created.category, isAvailable: created.isAvailable } });
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
-    console.error("createMenuItem failed:", err);
+    logger.error("business.action.failed", "createMenuItem failed", err, { action: "createMenuItem" });
     return { success: false, error: "خطا در ذخیره‌سازی. دوباره تلاش کن." };
   }
 }
@@ -71,14 +74,15 @@ export async function updateMenuItem(formData: FormData): Promise<ActionResult> 
   if ("error" in parsed) return { success: false, error: parsed.error };
 
   try {
-    await prisma.menuItem.update({
+    const updated = await prisma.menuItem.update({
       where: { id },
       data: parsed.data,
     });
+    await recordBusinessAudit({ event: "menu_item.updated", action: "update", entityType: "MenuItem", entityId: updated.id, result: "success", changes: { name: updated.name, price: updated.price, category: updated.category, isAvailable: updated.isAvailable } });
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
-    console.error("updateMenuItem failed:", err);
+    logger.error("business.action.failed", "updateMenuItem failed", err, { action: "updateMenuItem" });
     return { success: false, error: "خطا در به‌روزرسانی. دوباره تلاش کن." };
   }
 }
@@ -99,10 +103,11 @@ export async function deleteMenuItem(id: string): Promise<ActionResult> {
     }
 
     await prisma.menuItem.delete({ where: { id } });
+    await recordBusinessAudit({ event: "menu_item.deleted", action: "delete", entityType: "MenuItem", entityId: id, result: "success" });
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
-    console.error("deleteMenuItem failed:", err);
+    logger.error("business.action.failed", "deleteMenuItem failed", err, { action: "deleteMenuItem" });
     return { success: false, error: "خطا در حذف. دوباره تلاش کن." };
   }
 }

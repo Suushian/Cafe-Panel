@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { createManualBackup } from "@/lib/backup";
 import type { ActionResult } from "@/lib/types";
+import { logger } from "@/lib/logging";
+import { recordBusinessAudit } from "@/lib/logging/business-audit";
 
 const CONFIRM_WORD = "DELETE";
 
@@ -32,6 +34,14 @@ export async function resetDatabase(
   confirmWord: string
 ): Promise<ResetResult> {
   if (confirmWord.trim() !== CONFIRM_WORD) {
+    logger.warn("maintenance.reset.rejected", "Database reset rejected because confirmation phrase did not match");
+    await recordBusinessAudit({
+      event: "maintenance.reset.rejected",
+      action: "reset",
+      entityType: "Database",
+      result: "failure",
+      metadata: { reason: "confirmation_mismatch" },
+    });
     return { success: false, error: "کلمه‌ی تأیید اشتباه است." };
   }
 
@@ -45,9 +55,29 @@ export async function resetDatabase(
     return { success: false, error: "حداقل یک بخش را انتخاب کن." };
   }
 
-  // Auto backup — always, before any destructive operation
-  const backup = await createManualBackup();
+  let backup: Awaited<ReturnType<typeof createManualBackup>>;
+  try {
+    backup = await createManualBackup();
+  } catch (error) {
+    logger.error("maintenance.reset.backup.failed", "Automatic backup failed before database reset", error);
+    await recordBusinessAudit({
+      event: "maintenance.reset.failed",
+      action: "reset",
+      entityType: "Database",
+      result: "failure",
+      metadata: { reason: "backup_failed" },
+    });
+    return { success: false, error: "ساخت نسخه‌ی پشتیبان ناموفق بود. عملیات متوقف شد." };
+  }
   if (!backup) {
+    logger.error("maintenance.reset.backup.failed", "Automatic backup returned no backup before database reset");
+    await recordBusinessAudit({
+      event: "maintenance.reset.failed",
+      action: "reset",
+      entityType: "Database",
+      result: "failure",
+      metadata: { reason: "backup_unavailable" },
+    });
     return {
       success: false,
       error: "ساخت نسخه‌ی پشتیبان ناموفق بود. عملیات متوقف شد.",
@@ -63,9 +93,6 @@ export async function resetDatabase(
 
   try {
     await prisma.$transaction(async (tx) => {
-      // Order matters: OrderItems cascade with Orders.
-      // If both orders and menuItems: orders first (removes OrderItems).
-
       if (filters.orders) {
         const r = await tx.order.deleteMany();
         deleted.orders = r.count;
@@ -77,24 +104,16 @@ export async function resetDatabase(
       }
 
       if (filters.menuItems) {
-        // Only delete items NOT referenced by any OrderItem.
-        // If orders were also deleted above, this will succeed for all.
-        // If not, items used in existing orders are skipped to preserve data integrity.
         const usedIds = await tx.orderItem.findMany({
           select: { menuItemId: true },
           distinct: ["menuItemId"],
         });
         const usedSet = new Set(usedIds.map((u) => u.menuItemId));
-
         const all = await tx.menuItem.findMany({ select: { id: true } });
-        const deletable = all
-          .filter((m) => !usedSet.has(m.id))
-          .map((m) => m.id);
+        const deletable = all.filter((m) => !usedSet.has(m.id)).map((m) => m.id);
 
         if (deletable.length > 0) {
-          const r = await tx.menuItem.deleteMany({
-            where: { id: { in: deletable } },
-          });
+          const r = await tx.menuItem.deleteMany({ where: { id: { in: deletable } } });
           deleted.menuItems = r.count;
         }
       }
@@ -105,18 +124,42 @@ export async function resetDatabase(
       }
     });
 
+    await recordBusinessAudit({
+      event: "maintenance.reset.succeeded",
+      action: "reset",
+      entityType: "Database",
+      result: "success",
+      metadata: {
+        selected: {
+          orders: filters.orders,
+          customers: filters.customers,
+          menuItems: filters.menuItems,
+          sessions: filters.sessions,
+        },
+        deleted,
+        backupCreated: true,
+      },
+    });
+    logger.warn("maintenance.reset.succeeded", "Database reset completed after automatic backup", {
+      selected: filters,
+      deleted,
+    });
+
     revalidatePath("/orders");
     revalidatePath("/menu");
     revalidatePath("/customers");
     revalidatePath("/reports");
 
-    return {
-      success: true,
-      backupFilename: backup.filename,
-      deleted,
-    };
-  } catch (err) {
-    console.error("resetDatabase failed:", err);
+    return { success: true, backupFilename: backup.filename, deleted };
+  } catch (error) {
+    logger.error("maintenance.reset.failed", "Database reset transaction failed", error, { selected: filters });
+    await recordBusinessAudit({
+      event: "maintenance.reset.failed",
+      action: "reset",
+      entityType: "Database",
+      result: "failure",
+      metadata: { reason: "transaction_failed", selected: filters },
+    });
     return {
       success: false,
       error: "خطا در اجرای عملیات. backup ساخته شد ولی حذف انجام نشد.",
