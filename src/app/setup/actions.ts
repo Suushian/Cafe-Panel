@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/types";
+import { getPasswordLengthError } from "@/lib/password-policy";
 
 const INITIAL_ADMIN_ID = "initial-admin";
 
@@ -24,11 +25,12 @@ export async function setupAdmin(formData: FormData): Promise<ActionResult> {
   if (!password) {
     return { success: false, error: "رمز عبور الزامی است." };
   }
-  if (password.length < 6) {
+  const passwordLengthError = getPasswordLengthError(password);
+  if (passwordLengthError === "too-short") {
     return { success: false, error: "رمز عبور باید حداقل ۶ کاراکتر باشد." };
   }
-  if (password.length > 100) {
-    return { success: false, error: "رمز عبور بیش از حد بلند است." };
+  if (passwordLengthError === "too-long") {
+    return { success: false, error: "رمز عبور نباید بیشتر از ۱۰۰ کاراکتر باشد." };
   }
   if (password !== confirm) {
     return { success: false, error: "رمز عبور و تکرار آن یکسان نیستند." };
