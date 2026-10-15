@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { computeOrderNetTotal } from "@/lib/discount";
 import {
   isValidDateParam,
   getTodayParam,
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
 
   for (const order of orders) {
     const itemCount = order.items.reduce((s, i) => s + i.quantity, 0);
-    const finalPrice = Math.max(0, order.totalPrice - order.discountAmount);
+    const finalPrice = computeOrderNetTotal(order.totalPrice, order.discountAmount);
     const itemsText = order.items
       .map((i) => `${i.menuItem.name} × ${i.quantity}`)
       .join(" | ");
@@ -79,7 +80,7 @@ export async function GET(request: Request) {
   }
 
   const totalRevenue = orders.reduce(
-    (sum, o) => sum + o.totalPrice - o.discountAmount,
+    (sum, o) => sum + computeOrderNetTotal(o.totalPrice, o.discountAmount),
     0
   );
 
