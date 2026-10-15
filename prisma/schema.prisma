@@ -64,7 +64,6 @@ model Session {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  @@index([token])
   @@index([expiresAt])
 }
 
@@ -79,7 +78,6 @@ model Customer {
 
   orders           Order[]
 
-  @@index([subscriptionCode])
   @@index([name])
 }
 
