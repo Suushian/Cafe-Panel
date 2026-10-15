@@ -10,6 +10,7 @@ import {
 import { ORDER_TYPE_LABELS, isOrderType, type OrderType } from "@/lib/order-type";
 import OrderTypeIcon from "@/components/OrderTypeIcon";
 import { formatPrice } from "@/lib/format";
+import { computeOrderNetTotal } from "@/lib/discount";
 
 type Order = {
   id: string;
@@ -82,10 +83,7 @@ export default function RecentOrdersList({ orders }: Props) {
           const status = order.status as OrderStatus;
           const label = STATUS_LABELS[status] ?? order.status;
           const style = STATUS_STYLES[status] ?? "bg-border text-text-muted";
-          const finalPrice = Math.max(
-            0,
-            order.totalPrice - order.discountAmount
-          );
+          const finalPrice = computeOrderNetTotal(order.totalPrice, order.discountAmount);
           const orderType = isOrderType(order.orderType) ? order.orderType : null;
 
           const time = new Intl.DateTimeFormat("fa-IR", {
