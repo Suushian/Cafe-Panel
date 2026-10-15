@@ -20,3 +20,14 @@ test("rejects unsupported names and malformed timestamps", () => {
     assert.equal(backupDateFromFilename(name), null, name);
   }
 });
+
+
+test("validates real calendar dates and manual backup times", () => {
+  assert.equal(backupDateFromFilename("cafe-2024-02-29.db"), "2024-02-29");
+  assert.equal(backupDateFromFilename("cafe-2026-02-29.db"), null);
+  assert.equal(backupDateFromFilename("cafe-2026-02-30.db"), null);
+  assert.equal(backupDateFromFilename("cafe-2026-13-01.db"), null);
+  assert.equal(backupDateFromFilename("cafe-2026-10-14_235959.db"), "2026-10-14");
+  assert.equal(backupDateFromFilename("cafe-2026-10-14_246000.db"), null);
+  assert.equal(backupDateFromFilename("cafe-2026-10-14_126060.db"), null);
+});
