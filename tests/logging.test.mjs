@@ -26,3 +26,20 @@ test("redact bounds arrays, strings, and recursive depth", () => {
   assert.equal(result.long.length, 4000);
   assert.equal(result.values.length, 100);
 });
+
+test("redact removes common secret query parameters from URLs", () => {
+  const result = redact({ url: "https://localhost/path?access_token=abc123&safe=yes&api_key=xyz" });
+  assert.equal(result.url, "https://localhost/path?access_token=[REDACTED]&safe=yes&api_key=[REDACTED]");
+});
+
+test("redact safely handles circular objects and repeated references", () => {
+  const child = { label: "safe" };
+  const input = { first: child, second: child };
+  input.self = input;
+  const result = redact(input);
+  assert.deepEqual(result, {
+    first: { label: "safe" },
+    second: "[Circular]",
+    self: "[Circular]",
+  });
+});
