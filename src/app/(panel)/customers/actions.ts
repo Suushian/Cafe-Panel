@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/types";
+import { verifySession } from "@/lib/auth";
 
 type CustomerData = {
   name: string;
@@ -50,6 +51,7 @@ function parseCustomerForm(formData: FormData): ParseResult {
 }
 
 export async function createCustomer(formData: FormData): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   const parsed = parseCustomerForm(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
 
@@ -71,6 +73,7 @@ export async function createCustomer(formData: FormData): Promise<ActionResult> 
 }
 
 export async function updateCustomer(formData: FormData): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return { success: false, error: "شناسه‌ی مشتری نامعتبر است." };
 
@@ -102,6 +105,7 @@ export async function updateCustomer(formData: FormData): Promise<ActionResult> 
 }
 
 export async function deleteCustomer(id: string): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   if (!id) return { success: false, error: "شناسه‌ی مشتری نامعتبر است." };
 
   try {
