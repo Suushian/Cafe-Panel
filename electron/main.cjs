@@ -82,7 +82,34 @@ async function startServer() {
         durationMs: Date.now() - startedAt
       });
     });
-    handler(req, res);
+    try {
+      const result = handler(req, res);
+      if (result && typeof result.catch === "function") {
+        result.catch((error) => {
+          log.error("http.request.handler.failed", "Unhandled local HTTP request handler failure", error, {
+            method: req.method,
+            path: String(req.url || "").split("?")[0].slice(0, 200)
+          });
+          if (!res.headersSent && !res.writableEnded) {
+            res.statusCode = 500;
+            res.end("Internal Server Error");
+          } else if (!res.writableEnded) {
+            res.destroy();
+          }
+        });
+      }
+    } catch (error) {
+      log.error("http.request.handler.failed", "Synchronous local HTTP request handler failure", error, {
+        method: req.method,
+        path: String(req.url || "").split("?")[0].slice(0, 200)
+      });
+      if (!res.headersSent && !res.writableEnded) {
+        res.statusCode = 500;
+        res.end("Internal Server Error");
+      } else if (!res.writableEnded) {
+        res.destroy();
+      }
+    }
   });
   await new Promise((resolve, reject) => {
     server.once("error", reject);
