@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/categories";
 import type { ActionResult } from "@/lib/types";
+import { recordBusinessAudit } from "@/lib/logging/business-audit";
 
 type MenuItemData = {
   name: string;
@@ -54,7 +55,8 @@ export async function createMenuItem(formData: FormData): Promise<ActionResult> 
   if ("error" in parsed) return { success: false, error: parsed.error };
 
   try {
-    await prisma.menuItem.create({ data: parsed.data });
+    const created = await prisma.menuItem.create({ data: parsed.data });
+    await recordBusinessAudit({ event: "menu_item.created", action: "create", entityType: "MenuItem", entityId: created.id, result: "success", changes: { name: created.name, price: created.price, category: created.category, isAvailable: created.isAvailable } });
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
@@ -71,10 +73,11 @@ export async function updateMenuItem(formData: FormData): Promise<ActionResult> 
   if ("error" in parsed) return { success: false, error: parsed.error };
 
   try {
-    await prisma.menuItem.update({
+    const updated = await prisma.menuItem.update({
       where: { id },
       data: parsed.data,
     });
+    await recordBusinessAudit({ event: "menu_item.updated", action: "update", entityType: "MenuItem", entityId: updated.id, result: "success", changes: { name: updated.name, price: updated.price, category: updated.category, isAvailable: updated.isAvailable } });
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
@@ -99,6 +102,7 @@ export async function deleteMenuItem(id: string): Promise<ActionResult> {
     }
 
     await prisma.menuItem.delete({ where: { id } });
+    await recordBusinessAudit({ event: "menu_item.deleted", action: "delete", entityType: "MenuItem", entityId: id, result: "success" });
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
