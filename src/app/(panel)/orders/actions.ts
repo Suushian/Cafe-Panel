@@ -74,7 +74,7 @@ function parseOrderForm(formData: FormData): ParseOrderResult {
   const discountValueRaw = Number(formData.get("discountValue") ?? 0);
   if (
     discountTypeRaw !== "none" &&
-    (!Number.isFinite(discountValueRaw) ||
+    (!Number.isSafeInteger(discountValueRaw) ||
       discountValueRaw < 0 ||
       discountValueRaw > 1_000_000_000)
   ) {
