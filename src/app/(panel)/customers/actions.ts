@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/types";
+import { recordBusinessAudit } from "@/lib/logging/business-audit";
 
 type CustomerData = {
   name: string;
@@ -61,7 +62,8 @@ export async function createCustomer(formData: FormData): Promise<ActionResult> 
       return { success: false, error: "این کد اشتراک قبلاً ثبت شده است." };
     }
 
-    await prisma.customer.create({ data: parsed.data });
+    const created = await prisma.customer.create({ data: parsed.data });
+    await recordBusinessAudit({ event: "customer.created", action: "create", entityType: "Customer", entityId: created.id, result: "success", changes: { name: created.name, subscriptionCode: created.subscriptionCode, phoneProvided: Boolean(created.phone) } });
     revalidatePath("/customers");
     return { success: true };
   } catch (err) {
@@ -88,10 +90,11 @@ export async function updateCustomer(formData: FormData): Promise<ActionResult> 
       return { success: false, error: "این کد اشتراک قبلاً برای مشتری دیگری ثبت شده است." };
     }
 
-    await prisma.customer.update({
+    const updated = await prisma.customer.update({
       where: { id },
       data: parsed.data,
     });
+    await recordBusinessAudit({ event: "customer.updated", action: "update", entityType: "Customer", entityId: updated.id, result: "success", changes: { name: updated.name, subscriptionCode: updated.subscriptionCode, phoneProvided: Boolean(updated.phone) } });
     revalidatePath("/customers");
     revalidatePath("/orders");
     return { success: true };
@@ -111,6 +114,7 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
     });
 
     await prisma.customer.delete({ where: { id } });
+    await recordBusinessAudit({ event: "customer.deleted", action: "delete", entityType: "Customer", entityId: id, result: "success", metadata: { relatedOrderCount: orderCount } });
     revalidatePath("/customers");
     revalidatePath("/orders");
 
