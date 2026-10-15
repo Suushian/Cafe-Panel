@@ -12,6 +12,7 @@ import {
 import OrderTypeIcon from "@/components/OrderTypeIcon";
 import OrderStatusActions from "./OrderStatusActions";
 import AnimatedPrice from "./AnimatedPrice";
+import { computeOrderNetTotal } from "@/lib/discount";
 import { RotateCcw, User, Pencil } from "lucide-react";
 
 type Props = {
@@ -43,7 +44,7 @@ export default function OrderCard({ order, index = 0 }: Props) {
 
   const orderType = isOrderType(order.orderType) ? order.orderType : null;
   const hasDiscount = order.discountAmount > 0;
-  const finalPrice = Math.max(0, order.totalPrice - order.discountAmount);
+  const finalPrice = computeOrderNetTotal(order.totalPrice, order.discountAmount);
 
   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
   const isOpen = status === "open";
