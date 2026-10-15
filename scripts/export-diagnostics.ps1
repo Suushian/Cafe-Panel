@@ -3,9 +3,13 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$appData = Join-Path $env:APPDATA "cafe-panel"
-if (-not (Test-Path $appData)) {
-  throw "Cafe Panel user data directory was not found: $appData"
+$candidates = @(
+  (Join-Path $env:APPDATA "Cafe Panel"),
+  (Join-Path $env:APPDATA "cafe-panel")
+)
+$appData = $candidates | Where-Object { Test-Path (Join-Path $_ "logs") } | Select-Object -First 1
+if (-not $appData) {
+  throw "Cafe Panel user data directory was not found. Checked: $($candidates -join ', ')"
 }
 
 $logDirectory = Join-Path $appData "logs"
