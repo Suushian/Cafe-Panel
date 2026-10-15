@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth";
 import type { ActionResult } from "@/lib/types";
 import { prisma } from "@/lib/prisma";
+import { getPasswordLengthError } from "@/lib/password-policy";
 
 /* Persistent rate limit stored in SQLite so restarts do not reset failed attempts. */
 const RATE_LIMIT_ID = "admin";
@@ -68,6 +69,9 @@ export async function loginAdmin(formData: FormData): Promise<ActionResult> {
   const password = String(formData.get("password") ?? "");
   if (!password) {
     return { success: false, error: "رمز عبور الزامی است." };
+  }
+  if (getPasswordLengthError(password)) {
+    return { success: false, error: "رمز عبور نامعتبر است." };
   }
 
   let rl: Awaited<ReturnType<typeof checkRateLimit>>;
