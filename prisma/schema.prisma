@@ -91,3 +91,31 @@ model LoginRateLimit {
 
   @@index([blockedUntil])
 }
+
+model AuditEvent {
+  id          String   @id
+  event       String
+  action      String
+  entityType  String
+  entityId    String?
+  actorId     String?
+  result      String
+  operationId String?
+  payloadJson String
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([event, createdAt])
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([operationId])
+}
+
+model AuditOutbox {
+  id          String   @id
+  payloadJson String
+  createdAt   DateTime @default(now())
+  exportedAt  DateTime?
+
+  @@index([exportedAt, createdAt])
+}
