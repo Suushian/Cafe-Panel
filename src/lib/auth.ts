@@ -1,23 +1,35 @@
 import "server-only";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 
 const SESSION_COOKIE = "cafe_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 12; // 12 hours
 const BCRYPT_ROUNDS = 12;
+const PASSWORD_HASH_PREFIX = "sha256-bcrypt-v1:";
+
+function prehashPassword(plain: string): string {
+  return createHash("sha256").update(plain, "utf8").digest("hex");
+}
 
 /* ---------- Password ---------- */
 
 export async function hashPassword(plain: string): Promise<string> {
-  return bcrypt.hash(plain, BCRYPT_ROUNDS);
+  // bcrypt considers at most 72 input bytes. Pre-hashing keeps long Unicode
+  // passwords unambiguous while the prefix preserves legacy hash compatibility.
+  return PASSWORD_HASH_PREFIX + await bcrypt.hash(prehashPassword(plain), BCRYPT_ROUNDS);
 }
 
 export async function verifyPassword(
   plain: string,
   hash: string
 ): Promise<boolean> {
+  if (hash.startsWith(PASSWORD_HASH_PREFIX)) {
+    return bcrypt.compare(prehashPassword(plain), hash.slice(PASSWORD_HASH_PREFIX.length));
+  }
+
+  // Existing installations have unprefixed bcrypt hashes; continue to accept them.
   return bcrypt.compare(plain, hash);
 }
 
