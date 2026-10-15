@@ -64,7 +64,7 @@ export async function createCustomer(formData: FormData): Promise<ActionResult> 
     }
 
     const created = await prisma.customer.create({ data: parsed.data });
-    await recordBusinessAudit({ event: "customer.created", action: "create", entityType: "Customer", entityId: created.id, result: "success", changes: { name: created.name, subscriptionCode: created.subscriptionCode, phoneProvided: Boolean(created.phone) } });
+    await recordBusinessAudit({ event: "customer.created", action: "create", entityType: "Customer", entityId: created.id, result: "success", changes: { fieldsCreated: ["name", "subscriptionCode", "phone"], phoneProvided: Boolean(created.phone) } });
     revalidatePath("/customers");
     return { success: true };
   } catch (err) {
@@ -95,7 +95,7 @@ export async function updateCustomer(formData: FormData): Promise<ActionResult> 
       where: { id },
       data: parsed.data,
     });
-    await recordBusinessAudit({ event: "customer.updated", action: "update", entityType: "Customer", entityId: updated.id, result: "success", changes: { name: updated.name, subscriptionCode: updated.subscriptionCode, phoneProvided: Boolean(updated.phone) } });
+    await recordBusinessAudit({ event: "customer.updated", action: "update", entityType: "Customer", entityId: updated.id, result: "success", changes: { fieldsUpdated: ["name", "subscriptionCode", "phone"], phoneProvided: Boolean(updated.phone) } });
     revalidatePath("/customers");
     revalidatePath("/orders");
     return { success: true };
