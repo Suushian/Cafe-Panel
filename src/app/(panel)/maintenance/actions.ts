@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { createManualBackup } from "@/lib/backup";
 import type { ActionResult } from "@/lib/types";
+import { verifySession } from "@/lib/auth";
 
 const CONFIRM_WORD = "DELETE";
 
@@ -31,6 +32,7 @@ export async function resetDatabase(
   filters: ResetFilters,
   confirmWord: string
 ): Promise<ResetResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   if (confirmWord.trim() !== CONFIRM_WORD) {
     return { success: false, error: "کلمه‌ی تأیید اشتباه است." };
   }
