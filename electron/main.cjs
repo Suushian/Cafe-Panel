@@ -2,12 +2,40 @@ const { app, BrowserWindow, dialog } = require("electron");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
+const { execFile } = require("node:child_process");
+const { promisify } = require("node:util");
+
+const execFileAsync = promisify(execFile);
 
 let nextApp;
 let server;
 let mainWindow;
 
 const appDir = app.getAppPath();
+
+async function applyMigrations(dbPath) {
+  const prismaCli = path.join(appDir, "node_modules", "prisma", "build", "index.js");
+  const prismaConfig = path.join(appDir, "prisma.config.ts");
+
+  if (!fs.existsSync(prismaCli) || !fs.existsSync(prismaConfig)) {
+    throw new Error("Database migration tooling is missing from the installation.");
+  }
+
+  await execFileAsync(
+    process.execPath,
+    [prismaCli, "migrate", "deploy", "--config", prismaConfig],
+    {
+      cwd: appDir,
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: "1",
+        DATABASE_URL: `file:${dbPath}`,
+      },
+      windowsHide: true,
+      maxBuffer: 10 * 1024 * 1024,
+    }
+  );
+}
 
 async function prepareWritableData() {
   const userDataDir = app.getPath("userData");
@@ -23,6 +51,10 @@ async function prepareWritableData() {
     }
     fs.copyFileSync(bundledDb, dbPath);
   }
+
+  // Upgrade existing user databases before the application opens a Prisma client.
+  // A failed migration aborts startup without deleting or replacing the user's database.
+  await applyMigrations(dbPath);
 
   // Application data and backups must remain outside the installation directory.
   process.chdir(userDataDir);
