@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import { prisma } from "@/lib/prisma";
 import DashboardClient from "./components/DashboardClient";
 import { dayRange, getTodayParam, shiftDate } from "@/lib/date-range";
+import { computeOrderNetTotal } from "@/lib/discount";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +47,7 @@ export default async function DashboardPage() {
           .then((orders) => ({
             date,
             revenue: orders.reduce(
-              (s, o) => s + o.totalPrice - o.discountAmount,
+              (s, o) => s + computeOrderNetTotal(o.totalPrice, o.discountAmount),
               0
             ),
           }));
