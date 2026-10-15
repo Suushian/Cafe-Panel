@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { ActionResult } from "@/lib/types";
 import { recordBusinessAudit } from "@/lib/logging/business-audit";
+import { logger } from "@/lib/logging";
 
 type CustomerData = {
   name: string;
@@ -67,7 +68,7 @@ export async function createCustomer(formData: FormData): Promise<ActionResult> 
     revalidatePath("/customers");
     return { success: true };
   } catch (err) {
-    console.error("createCustomer failed:", err);
+    logger.error("business.action.failed", "createCustomer failed", err, { action: "createCustomer" });
     return { success: false, error: "خطا در ذخیره‌سازی. دوباره تلاش کن." };
   }
 }
@@ -99,7 +100,7 @@ export async function updateCustomer(formData: FormData): Promise<ActionResult> 
     revalidatePath("/orders");
     return { success: true };
   } catch (err) {
-    console.error("updateCustomer failed:", err);
+    logger.error("business.action.failed", "updateCustomer failed", err, { action: "updateCustomer" });
     return { success: false, error: "خطا در به‌روزرسانی. دوباره تلاش کن." };
   }
 }
@@ -121,7 +122,7 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
     // Note: orders keep their data, just customerId becomes null
     return { success: true };
   } catch (err) {
-    console.error("deleteCustomer failed:", err);
+    logger.error("business.action.failed", "deleteCustomer failed", err, { action: "deleteCustomer" });
     return { success: false, error: "خطا در حذف. دوباره تلاش کن." };
   }
 }
