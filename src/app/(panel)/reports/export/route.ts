@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { computeOrderNetTotal } from "@/lib/discount";
+import { verifySession } from "@/lib/auth";
 import {
   isValidDateParam,
   getTodayParam,
@@ -18,6 +19,9 @@ function csvEscape(value: string | number): string {
 }
 
 export async function GET(request: Request) {
+  if (!(await verifySession())) {
+    return NextResponse.json({ error: "نشست معتبر نیست. دوباره وارد شو." }, { status: 401 });
+  }
   const { searchParams } = new URL(request.url);
   const raw = searchParams.get("date");
   const date = isValidDateParam(raw) ? raw : getTodayParam();
