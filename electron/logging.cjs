@@ -24,8 +24,8 @@ function safe(value, depth = 0, seen = new WeakSet()) {
   }
   if (typeof value === "string") {
     return value
-      .replace(/(bearer\\s+)[A-Za-z0-9._~+/=-]+/gi, "$1[REDACTED]")
-      .replace(/([?&](?:access_token|refresh_token|token|api_key|apikey|password|secret|authorization)=)[^&#\\s]*/gi, "$1[REDACTED]")
+      .replace(/(bearer\s+)[A-Za-z0-9._~+/=-]+/gi, "$1[REDACTED]")
+      .replace(/([?&](?:access_token|refresh_token|token|api_key|apikey|password|secret|authorization)=)[^&#\s]*/gi, "$1[REDACTED]")
       .slice(0, 4000);
   }
   if (typeof value === "bigint") return value.toString();
