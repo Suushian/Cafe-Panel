@@ -51,6 +51,9 @@ export async function recordAudit(input: AuditInput): Promise<string> {
         data: { id: eventId, payloadJson: JSON.stringify(payload), createdAt: timestamp },
       });
     });
+    void import("./audit-exporter").then(({ exportAuditBatch }) => exportAuditBatch()).catch((error) => {
+      logger.error("audit.export.schedule.failed", "Audit event remains in outbox for retry", error, { eventId });
+    });
     return eventId;
   } catch (error) {
     logger.error("audit.write.failed", "Failed to persist audit event", error, {
