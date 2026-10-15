@@ -1,9 +1,9 @@
-name: Build and publish Cafe Panel 1.0.0 for Windows
+name: Build and publish Cafe Panel v0.1 for Windows
 
 on:
   push:
     branches:
-      - release/v1.0.0
+      - release/v0.1.0
 
 permissions:
   contents: write
@@ -77,21 +77,21 @@ jobs:
       - name: Build Windows x64 installer
         run: npx electron-builder --win nsis --x64 --publish never --config electron-builder.yml
 
-      - name: Publish version 1.0.0 release
+      - name: Publish version 0.1 test release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          target_commitish: release/v1.0.0
-          name: Cafe Panel v1.0.0
+          tag_name: v0.1.0
+          target_commitish: release/v0.1.0
+          name: Cafe Panel نسخه 0.1
           body: |
-            ## Cafe Panel 1.0.0 — Windows
+            ## Cafe Panel نسخه 0.1 — Windows x64
 
-            - Windows x64 installer (.exe)
-            - Desktop application with bundled local web runtime
-            - SQLite database and backups stored in the user's application data folder
-            - First launch opens the setup screen to create the administrator password
+            نسخه آزمایشی برای تست برنامه. قبل از استفاده با داده‌های واقعی، دیتابیس و نسخه‌های پشتیبان را جداگانه ذخیره کنید.
 
-            Install by downloading and running `Cafe-Panel-Setup-1.0.0.exe`.
-          files: release/Cafe-Panel-Setup-1.0.0.exe
+            - نصب‌کننده Windows x64 (.exe)
+            - اجرای دسکتاپ با runtime محلی
+            - دیتابیس و پشتیبان‌ها در پوشه داده کاربر ذخیره می‌شوند
+            - در اجرای اول، صفحه ساخت رمز مدیر نمایش داده می‌شود
+          files: release/Cafe-Panel-Setup-0.1.0.exe
           draft: false
-          prerelease: false
+          prerelease: true
