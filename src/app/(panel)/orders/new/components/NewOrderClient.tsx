@@ -363,6 +363,7 @@ export default function NewOrderClient({
                 type="number"
                 inputMode="numeric"
                 min={0}
+                step={1}
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder={
