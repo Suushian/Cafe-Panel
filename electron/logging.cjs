@@ -5,20 +5,31 @@ const os = require("node:os");
 const MAX_BYTES = 10 * 1024 * 1024;
 const ROTATIONS = 5;
 
-function safe(value) {
-  const secrets = /(password|passwd|token|secret|authorization|cookie|session|api[-_]?key|credential)/i;
-  if (Array.isArray(value)) return value.slice(0, 100).map(safe);
+function safe(value, depth = 0, seen = new WeakSet()) {
+  const secrets = /(password|passwd|token|secret|authorization|cookie|session|api[-_]?key|credential|private[-_]?key|client[-_]?secret)/i;
+  if (depth > 6) return "[MaxDepth]";
+  if (Array.isArray(value)) {
+    if (seen.has(value)) return "[Circular]";
+    seen.add(value);
+    return value.slice(0, 100).map((item) => safe(item, depth + 1, seen));
+  }
   if (value && typeof value === "object") {
+    if (seen.has(value)) return "[Circular]";
+    seen.add(value);
     const result = {};
     for (const [key, child] of Object.entries(value).slice(0, 100)) {
-      result[key] = secrets.test(key) ? "[REDACTED]" : safe(child);
+      result[key] = secrets.test(key) ? "[REDACTED]" : safe(child, depth + 1, seen);
     }
     return result;
   }
   if (typeof value === "string") {
-    return value.replace(/(bearer\s+)[A-Za-z0-9._~+/=-]+/gi, "$1[REDACTED]").slice(0, 4000);
+    return value
+      .replace(/(bearer\\s+)[A-Za-z0-9._~+/=-]+/gi, "$1[REDACTED]")
+      .replace(/([?&](?:access_token|refresh_token|token|api_key|apikey|password|secret|authorization)=)[^&#\\s]*/gi, "$1[REDACTED]")
+      .slice(0, 4000);
   }
   if (typeof value === "bigint") return value.toString();
+  if (typeof value === "function") return "[Function]";
   return value;
 }
 
