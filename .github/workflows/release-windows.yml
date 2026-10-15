@@ -1,9 +1,10 @@
-name: Build and publish Cafe Panel 1.0.0 for Windows
+name: Build and publish Cafe Panel for Windows
 
 on:
   push:
     branches:
       - release/v1.0.0
+      - release/v0.1.0
 
 permissions:
   contents: write
@@ -77,21 +78,21 @@ jobs:
       - name: Build Windows x64 installer
         run: npx electron-builder --win nsis --x64 --publish never --config electron-builder.yml
 
-      - name: Publish version 1.0.0 release
+      - name: Publish Windows release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.0
-          target_commitish: release/v1.0.0
-          name: Cafe Panel v1.0.0
+          tag_name: ${{ github.ref_name == 'release/v0.1.0' && 'v0.1.0' || 'v1.0.0' }}
+          target_commitish: ${{ github.ref_name }}
+          name: ${{ github.ref_name == 'release/v0.1.0' && 'Cafe Panel نسخه 0.1' || 'Cafe Panel v1.0.0' }}
           body: |
-            ## Cafe Panel 1.0.0 — Windows
+            Cafe Panel for Windows x64.
 
-            - Windows x64 installer (.exe)
+            - Windows installer (.exe)
             - Desktop application with bundled local web runtime
             - SQLite database and backups stored in the user's application data folder
             - First launch opens the setup screen to create the administrator password
 
-            Install by downloading and running `Cafe-Panel-Setup-1.0.0.exe`.
-          files: release/Cafe-Panel-Setup-1.0.0.exe
+            This is an early testing release. Back up existing application data before testing.
+          files: release/Cafe-Panel-Setup-${{ github.ref_name == 'release/v0.1.0' && '0.1.0' || '1.0.0' }}.exe
           draft: false
-          prerelease: false
+          prerelease: ${{ github.ref_name == 'release/v0.1.0' }}
