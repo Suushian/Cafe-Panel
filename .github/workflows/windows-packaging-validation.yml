@@ -1,0 +1,66 @@
+name: Windows packaging validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "electron/**"
+      - "prisma/**"
+      - "src/lib/logging/**"
+      - "src/instrumentation.ts"
+      - "electron-builder.yml"
+      - "prisma.config.ts"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/windows-packaging-validation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install project dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Prepare clean SQLite database
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path data | Out-Null
+          npx prisma migrate deploy
+
+      - name: Run tests and static validation
+        run: |
+          npm test
+          npm run lint
+          npm run typecheck
+          npm run build
+
+      - name: Install Windows packaging tools
+        run: npm install --no-save --package-lock=false electron@37.2.6 electron-builder@26.0.12
+
+      - name: Build Windows x64 installer
+        run: npx electron-builder --win nsis --x64 --publish never --config electron-builder.yml
+
+      - name: Upload installer for inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: cafe-panel-windows-installer
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 7
