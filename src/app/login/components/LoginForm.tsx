@@ -31,6 +31,8 @@ export default function LoginForm() {
             name="password"
             type={showPassword ? "text" : "password"}
             required
+            minLength={6}
+            maxLength={100}
             autoFocus
             autoComplete="current-password"
             className="field-input pl-11"
