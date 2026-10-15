@@ -45,6 +45,30 @@ jobs:
           New-Item -ItemType Directory -Force -Path data | Out-Null
           npx prisma migrate deploy
 
+      - name: Validate upgrade from the previous migration state
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $auditMigration = "prisma/migrations/20261015140000_add_audit_logging"
+          $heldMigration = "prisma/migrations/20261015140000_add_audit_logging.validation-hold"
+          $upgradeDb = Join-Path $PWD "data/upgrade-test.db"
+          if (Test-Path $upgradeDb) { Remove-Item $upgradeDb -Force }
+          if (-not (Test-Path $auditMigration)) { throw "Audit migration directory was not found." }
+          try {
+            Rename-Item -Path $auditMigration -NewName "20261015140000_add_audit_logging.validation-hold"
+            $env:DATABASE_URL = "file:" + ($upgradeDb -replace "\\", "/")
+            npx prisma migrate deploy
+            if ($LASTEXITCODE -ne 0) { throw "Previous migration state failed to deploy." }
+          }
+          finally {
+            if (Test-Path $heldMigration) {
+              Rename-Item -Path $heldMigration -NewName "20261015140000_add_audit_logging"
+            }
+          }
+          npx prisma migrate deploy
+          if ($LASTEXITCODE -ne 0) { throw "Audit migration failed when upgrading an existing migrated database." }
+          Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+
       - name: Run tests and static validation
         run: |
           npm test
