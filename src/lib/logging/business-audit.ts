@@ -5,8 +5,8 @@ import { prisma } from "@/lib/prisma";
 /** Audit failures are surfaced in technical logs without lying about an already committed business action. */
 export async function recordBusinessAudit(input: AuditInput): Promise<void> {
   try {
-    const actor = input.actorId ? null : await prisma.admin.findFirst({ select: { id: true } });
-    await recordAudit({ ...input, actorId: input.actorId ?? actor?.id ?? null });
+    const actor = input.actorId === undefined ? await prisma.admin.findFirst({ select: { id: true } }) : null;
+    await recordAudit({ ...input, actorId: input.actorId === undefined ? actor?.id ?? null : input.actorId });
   } catch (error) {
     logger.error("audit.business.record.failed", "Business action completed but its audit event could not be persisted", error, {
       event: input.event,
