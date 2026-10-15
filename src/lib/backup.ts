@@ -88,17 +88,21 @@ function cleanupOldBackups(): number {
   const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
   let removed = 0;
 
-  const entries = fs.readdirSync(dir).filter((f) => f.endsWith(".db"));
+  const entries = fs.readdirSync(dir).filter((filename) =>
+    backupDateFromFilename(filename) !== null
+  );
   for (const filename of entries) {
     const full = path.join(dir, filename);
-    const stat = fs.statSync(full);
-    if (stat.mtime.getTime() < cutoff) {
-      try {
-        fs.unlinkSync(full);
-        removed++;
-      } catch {
-        // Ignore individual cleanup failures; preserve remaining backups.
-      }
+    try {
+      // Only remove regular backup files; ignore directories, symlinks and entries
+      // that disappear or become inaccessible during cleanup.
+      const stat = fs.lstatSync(full);
+      if (!stat.isFile() || stat.mtime.getTime() >= cutoff) continue;
+
+      fs.unlinkSync(full);
+      removed++;
+    } catch {
+      // Ignore individual cleanup failures; preserve remaining backups.
     }
   }
   return removed;
