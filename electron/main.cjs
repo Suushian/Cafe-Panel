@@ -41,7 +41,7 @@ function runDatabaseMigrations() {
   log.info("database.migration.started", "Applying pending database migrations");
   const result = spawnSync(process.execPath, [prismaCli, "migrate", "deploy", "--schema", path.join(appDir, "prisma", "schema.prisma")], {
     cwd: appDir, encoding: "utf8", timeout: 120000, maxBuffer: 4 * 1024 * 1024,
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", DATABASE_URL: "file:" + dbPath, PRISMA_HIDE_UPDATE_MESSAGE: "1" }
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", DATABASE_URL: "file:" + dbPath.replace(/\\/g, "/"), PRISMA_HIDE_UPDATE_MESSAGE: "1" }
   });
   if (result.stdout) log.info("database.migration.output", "Migration command output", { output: result.stdout.slice(-6000) });
   if (result.stderr) log.warn("database.migration.stderr", "Migration command diagnostics", { output: result.stderr.slice(-3000) });
