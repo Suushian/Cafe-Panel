@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { CATEGORIES } from "@/lib/categories";
 import type { ActionResult } from "@/lib/types";
 import { recordBusinessAudit } from "@/lib/logging/business-audit";
+import { logger } from "@/lib/logging";
 
 type MenuItemData = {
   name: string;
@@ -60,7 +61,7 @@ export async function createMenuItem(formData: FormData): Promise<ActionResult> 
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
-    console.error("createMenuItem failed:", err);
+    logger.error("business.action.failed", "createMenuItem failed", err, { action: "createMenuItem" });
     return { success: false, error: "خطا در ذخیره‌سازی. دوباره تلاش کن." };
   }
 }
@@ -81,7 +82,7 @@ export async function updateMenuItem(formData: FormData): Promise<ActionResult> 
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
-    console.error("updateMenuItem failed:", err);
+    logger.error("business.action.failed", "updateMenuItem failed", err, { action: "updateMenuItem" });
     return { success: false, error: "خطا در به‌روزرسانی. دوباره تلاش کن." };
   }
 }
@@ -106,7 +107,7 @@ export async function deleteMenuItem(id: string): Promise<ActionResult> {
     revalidatePath("/menu");
     return { success: true };
   } catch (err) {
-    console.error("deleteMenuItem failed:", err);
+    logger.error("business.action.failed", "deleteMenuItem failed", err, { action: "deleteMenuItem" });
     return { success: false, error: "خطا در حذف. دوباره تلاش کن." };
   }
 }
