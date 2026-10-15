@@ -2,18 +2,23 @@ const { app, BrowserWindow, dialog } = require("electron");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
+const { createMainLogger } = require("./logging.cjs");
 
 let nextApp;
 let server;
 let mainWindow;
 
 const appDir = app.getAppPath();
+const logDirectory = () => path.join(app.getPath("userData"), "logs");
+const log = createMainLogger(logDirectory, app.getVersion());
 
 async function prepareWritableData() {
   const userDataDir = app.getPath("userData");
   const dataDir = path.join(userDataDir, "data");
   const backupsDir = path.join(dataDir, "backups");
   fs.mkdirSync(backupsDir, { recursive: true });
+  fs.mkdirSync(logDirectory(), { recursive: true });
+  log.info("app.data.prepare.started", "Preparing writable application data", { userDataDir });
 
   const dbPath = path.join(dataDir, "cafe.db");
   if (!fs.existsSync(dbPath)) {
@@ -22,23 +27,42 @@ async function prepareWritableData() {
       throw new Error("The initial database was not packaged with Cafe Panel.");
     }
     fs.copyFileSync(bundledDb, dbPath);
+    log.info("database.initial.copy.completed", "Copied initial database into user data directory");
   }
 
-  // Application data and backups must remain outside the installation directory.
   process.chdir(userDataDir);
 }
 
 async function startServer() {
+  log.info("app.startup.started", "Cafe Panel startup started", {
+    platform: process.platform,
+    arch: process.arch,
+    appPath: appDir
+  });
   await prepareWritableData();
   process.env.NODE_ENV = "production";
   process.env.NEXT_TELEMETRY_DISABLED = "1";
+  process.env.CAFE_LOG_DIR = logDirectory();
 
   const next = require(path.join(appDir, "node_modules", "next"));
   nextApp = next({ dev: false, dir: appDir });
   await nextApp.prepare();
+  log.info("server.next.ready", "Next.js application prepared");
 
   const handler = nextApp.getRequestHandler();
-  server = http.createServer((req, res) => handler(req, res));
+  server = http.createServer((req, res) => {
+    const startedAt = Date.now();
+    res.once("finish", () => {
+      const level = res.statusCode >= 500 ? "warn" : "info";
+      log[level]("http.request.completed", "Local HTTP request completed", {
+        method: req.method,
+        path: String(req.url || "").split("?")[0].slice(0, 200),
+        statusCode: res.statusCode,
+        durationMs: Date.now() - startedAt
+      });
+    });
+    handler(req, res);
+  });
   await new Promise((resolve, reject) => {
     server.once("error", reject);
     server.listen(0, "127.0.0.1", resolve);
@@ -48,6 +72,7 @@ async function startServer() {
   if (!address || typeof address === "string") {
     throw new Error("Could not determine the local server port.");
   }
+  log.info("server.http.ready", "Local HTTP server is listening", { address: "127.0.0.1", port: address.port });
 
   mainWindow = new BrowserWindow({
     width: 1440,
@@ -62,13 +87,24 @@ async function startServer() {
       sandbox: true
     }
   });
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    log.error("renderer.process.gone", "Renderer process exited unexpectedly", new Error(details.reason || "Renderer exited"), details);
+  });
+  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+    log.error("renderer.load.failed", "Renderer failed to load", new Error(errorDescription), {
+      errorCode,
+      url: String(validatedURL || "").split("?")[0]
+    });
+  });
   await mainWindow.loadURL(`http://127.0.0.1:${address.port}`);
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
+  log.info("app.startup.completed", "Cafe Panel startup completed");
 }
 
 app.whenReady().then(startServer).catch((error) => {
+  log.fatal("app.startup.failed", "Cafe Panel failed to start", error);
   console.error("Cafe Panel startup failed:", error);
   dialog.showErrorBox(
     "Cafe Panel could not start",
@@ -82,6 +118,7 @@ app.on("window-all-closed", () => {
 });
 
 app.on("before-quit", () => {
+  log.info("app.shutdown.started", "Cafe Panel is shutting down");
   if (server) {
     server.close();
     server = null;
