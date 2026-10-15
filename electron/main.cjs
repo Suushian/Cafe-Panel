@@ -2,6 +2,7 @@ const { app, BrowserWindow, dialog } = require("electron");
 const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 const { createMainLogger } = require("./logging.cjs");
 
 let nextApp;
@@ -33,6 +34,25 @@ async function prepareWritableData() {
   process.chdir(userDataDir);
 }
 
+function runDatabaseMigrations() {
+  const dbPath = path.join(app.getPath("userData"), "data", "cafe.db");
+  const prismaCli = path.join(appDir, "node_modules", "prisma", "build", "index.js");
+  if (!fs.existsSync(prismaCli)) throw new Error("Prisma CLI was not packaged; database migrations cannot run.");
+  log.info("database.migration.started", "Applying pending database migrations");
+  const result = spawnSync(process.execPath, [prismaCli, "migrate", "deploy", "--schema", path.join(appDir, "prisma", "schema.prisma")], {
+    cwd: appDir, encoding: "utf8", timeout: 120000, maxBuffer: 4 * 1024 * 1024,
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1", DATABASE_URL: "file:" + dbPath, PRISMA_HIDE_UPDATE_MESSAGE: "1" }
+  });
+  if (result.stdout) log.info("database.migration.output", "Migration command output", { output: result.stdout.slice(-6000) });
+  if (result.stderr) log.warn("database.migration.stderr", "Migration command diagnostics", { output: result.stderr.slice(-3000) });
+  if (result.error || result.status !== 0) {
+    const error = result.error || new Error("Prisma migrate deploy exited with status " + result.status);
+    log.fatal("database.migration.failed", "Database migration failed", error, { status: result.status });
+    throw error;
+  }
+  log.info("database.migration.completed", "Database migrations completed");
+}
+
 async function startServer() {
   log.info("app.startup.started", "Cafe Panel startup started", {
     platform: process.platform,
@@ -40,6 +60,7 @@ async function startServer() {
     appPath: appDir
   });
   await prepareWritableData();
+  runDatabaseMigrations();
   process.env.NODE_ENV = "production";
   process.env.NEXT_TELEMETRY_DISABLED = "1";
   process.env.CAFE_LOG_DIR = logDirectory();
