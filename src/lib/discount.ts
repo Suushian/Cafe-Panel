@@ -21,14 +21,28 @@ export function computeDiscountAmount(
   type: DiscountType,
   value: number
 ): number {
+  if (!Number.isSafeInteger(subtotal) || subtotal <= 0) return 0;
   if (type === "none") return 0;
   if (!Number.isFinite(value) || value <= 0) return 0;
 
   if (type === "percent") {
-    if (value > 100) return subtotal;
-    return Math.round((subtotal * value) / 100);
+    return Math.min(subtotal, Math.round((subtotal * Math.min(value, 100)) / 100));
   }
 
-  // amount
+  // Fixed-amount discounts cannot exceed the order subtotal.
   return Math.min(Math.round(value), subtotal);
+}
+
+export function computeOrderNetTotal(
+  totalPrice: number,
+  discountAmount: number
+): number {
+  if (!Number.isFinite(totalPrice) || totalPrice <= 0) return 0;
+
+  const gross = Math.round(totalPrice);
+  const discount = Number.isFinite(discountAmount)
+    ? Math.min(gross, Math.max(0, Math.round(discountAmount)))
+    : 0;
+
+  return gross - discount;
 }
