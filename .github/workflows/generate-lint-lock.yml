@@ -1,0 +1,35 @@
+name: Generate lint dependency lock
+
+on:
+  push:
+    branches:
+      - fix/runtime-prisma-migrations
+
+permissions:
+  contents: write
+
+jobs:
+  generate-lock:
+    if: "!startsWith(github.event.head_commit.message, 'chore(deps): generate lint lock')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Add pinned lint tools and regenerate lockfile
+        run: npm install --save-dev --save-exact eslint@9.39.1 @typescript-eslint/parser@8.71.2
+      - name: Commit generated dependency lock
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "Lockfile already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore(deps): generate lint lock"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
