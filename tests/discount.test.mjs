@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { computeDiscountAmount, isDiscountType } from "../src/lib/discount.ts";
+import { computeDiscountAmount, isDiscountType, isValidDiscountValue } from "../src/lib/discount.ts";
 
 test("computes percent discounts and rounds to whole tomans", () => {
   assert.equal(computeDiscountAmount(1001, "percent", 10), 100);
@@ -18,6 +18,17 @@ test("handles no-discount and validates discount types", () => {
   assert.equal(computeDiscountAmount(500, "none", 20), 0);
   assert.equal(isDiscountType("percent"), true);
   assert.equal(isDiscountType("invalid"), false);
+});
+
+test("validates discount values and rejects percentages above 100", () => {
+  assert.equal(isValidDiscountValue("percent", 0), true);
+  assert.equal(isValidDiscountValue("percent", 100), true);
+  assert.equal(isValidDiscountValue("percent", 101), false);
+  assert.equal(isValidDiscountValue("percent", -1), false);
+  assert.equal(isValidDiscountValue("percent", 10.5), false);
+  assert.equal(isValidDiscountValue("amount", 1_000_000_000), true);
+  assert.equal(isValidDiscountValue("amount", 1_000_000_001), false);
+  assert.equal(isValidDiscountValue("amount", Number.NaN), false);
 });
 
 import { getPayableAmount, isValidOrderTotal, MAX_ORDER_TOTAL } from "../src/lib/order-total.ts";
