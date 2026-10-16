@@ -35,7 +35,7 @@ export function allocateNetLineAmounts(
     };
   });
   const allocated = shares.map((share) => share.amount);
-  let remainder = payableTotal - allocated.reduce((sum, amount) => sum + amount, 0);
+  const remainder = payableTotal - allocated.reduce((sum, amount) => sum + amount, 0);
 
   const order = [...shares].sort(
     (a, b) => (a.remainder === b.remainder ? a.index - b.index : a.remainder > b.remainder ? -1 : 1)
