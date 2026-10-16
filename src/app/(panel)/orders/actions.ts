@@ -242,6 +242,16 @@ export async function updateOrder(formData: FormData): Promise<ActionResult> {
 
   try {
     await prisma.$transaction(async (tx) => {
+      // Recheck inside the transaction to avoid editing an order that was paid
+      // or cancelled after the initial read above.
+      const currentOrder = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { status: true },
+      });
+      if (!currentOrder || currentOrder.status !== "open") {
+        throw new Error("ORDER_NOT_EDITABLE");
+      }
+
       // Replace all items
       await tx.orderItem.deleteMany({ where: { orderId } });
 
@@ -266,6 +276,9 @@ export async function updateOrder(formData: FormData): Promise<ActionResult> {
     revalidatePath("/customers");
     return { success: true };
   } catch (err) {
+    if (err instanceof Error && err.message === "ORDER_NOT_EDITABLE") {
+      return { success: false, error: "این سفارش دیگر باز نیست و قابل ویرایش نیست." };
+    }
     logger.error("business.action.failed", "updateOrder failed", err, { action: "updateOrder" });
     return { success: false, error: "خطا در ویرایش سفارش. دوباره تلاش کن." };
   }
