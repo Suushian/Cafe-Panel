@@ -85,6 +85,7 @@ function Shell({ children }: { children: ReactNode }) {
           />
           {/* Panel (RTL: slide from right) */}
           <div
+            id="mobile-navigation-dialog"
             role={mobileOpen ? "dialog" : undefined}
             aria-modal={mobileOpen ? true : undefined}
             aria-label="منوی اصلی"
