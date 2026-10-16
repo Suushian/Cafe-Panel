@@ -53,9 +53,11 @@ export default function LineChart({
         .join(" ");
 
       const pathArea =
-        pathLine +
-        ` L ${pts[pts.length - 1].x} ${height - PADDING.bottom}` +
-        ` L ${pts[0].x} ${height - PADDING.bottom} Z`;
+        pts.length > 0
+          ? pathLine +
+            ` L ${pts[pts.length - 1].x} ${height - PADDING.bottom}` +
+            ` L ${pts[0].x} ${height - PADDING.bottom} Z`
+          : "";
 
       const gridLines = [0, 0.25, 0.5, 0.75, 1].map((f) => {
         const y = PADDING.top + innerH * f;
