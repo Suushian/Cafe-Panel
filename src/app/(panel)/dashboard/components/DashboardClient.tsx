@@ -169,7 +169,7 @@ export default function DashboardClient({
             <span className="min-w-0"><span className="block text-sm font-semibold text-text">سفارش‌های در انتظار</span><span className="block text-xs text-text-muted">برای بررسی وضعیت سفارش‌های باز وارد بخش سفارش‌ها شوید.</span></span>
           </span>
           <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-text">{openOrders.toLocaleString("fa-IR")}<ArrowLeft size={16} className="transition-transform group-hover:-translate-x-0.5" /></span>
-        </a>
+        </Link>
       )}
 
       {/* Sales chart */}
