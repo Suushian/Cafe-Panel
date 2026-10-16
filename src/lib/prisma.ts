@@ -9,12 +9,14 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  // Resolve the path once and convert it to a file URL. Passing a raw Windows
-  // path (for example, D:\\work\\cafe.db) to libSQL can fail because the
-  // backslashes and drive letter are interpreted as URL syntax.
+  // Ensure the directory exists in ZIP downloads and fresh installations,
+  // where empty directories are not preserved by Git.
   const dbPath = path.resolve(process.cwd(), "data", "cafe.db");
-  const url = pathToFileURL(dbPath).href;
+  fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
+  // Convert the absolute path to a proper file URL. This safely handles
+  // Windows drive letters, backslashes, and spaces in the project path.
+  const url = pathToFileURL(dbPath).href;
   const adapter = new PrismaLibSql({ url });
 
   return new PrismaClient({
