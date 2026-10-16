@@ -215,7 +215,7 @@ export default async function ReportsPage({
       {/* Top items */}
       <section>
         <h2 className="text-sm font-medium text-text-muted mb-3">
-          آیتم‌های پرفروش
+          آیتم‌های پرفروش (درآمد خالص پس از تخفیف)
         </h2>
         {topItems.length === 0 ? (
           <EmptyState
