@@ -31,8 +31,8 @@ function parseMenuItemForm(formData: FormData): ParseResult {
   }
 
   const price = Number(priceRaw);
-  if (!Number.isFinite(price) || price <= 0) {
-    return { error: "قیمت باید یک عدد مثبت باشد." };
+  if (!Number.isSafeInteger(price) || price <= 0) {
+    return { error: "قیمت باید یک عدد صحیح مثبت باشد." };
   }
   if (price > 100_000_000) {
     return { error: "قیمت منطقی نیست." };
