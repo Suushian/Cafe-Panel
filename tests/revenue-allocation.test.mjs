@@ -25,9 +25,13 @@ test("handles zero payable totals and empty orders", () => {
   assert.deepEqual(allocateNetLineAmounts([], 0), []);
 });
 
-test("rejects invalid gross line amounts", () => {
+test("rejects invalid gross line amounts and payable totals above gross", () => {
   assert.throws(
     () => allocateNetLineAmounts([{ gross: -1 }], 10),
+    RangeError
+  );
+  assert.throws(
+    () => allocateNetLineAmounts([{ gross: 10 }], 11),
     RangeError
   );
 });
