@@ -4,7 +4,7 @@
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
-    "dev": "next dev",
+    "dev": "prisma migrate deploy && next dev",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
