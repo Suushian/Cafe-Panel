@@ -4,9 +4,11 @@
   "private": true,
   "main": "electron/main.cjs",
   "scripts": {
+    "predev": "prisma migrate deploy && prisma generate",
     "dev": "next dev",
-    "build": "next build",
+    "prestart": "prisma migrate deploy",
     "start": "next start",
+    "build": "next build",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "lint": "npm install --no-save --package-lock=false eslint@9.39.1 @typescript-eslint/parser@8.71.2 && eslint ."
