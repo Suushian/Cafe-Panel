@@ -4,7 +4,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$projectDir = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path.TrimEnd("\", "/")
+$projectDir = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..")).TrimEnd([char[]]@("\", "/"))
 $listenerIds = @(
   Get-NetTCPConnection -LocalPort 3000 -State Listen -ErrorAction SilentlyContinue |
     Select-Object -ExpandProperty OwningProcess -Unique
