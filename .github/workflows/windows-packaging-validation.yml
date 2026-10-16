@@ -13,6 +13,9 @@ on:
       - "prisma.config.ts"
       - "package.json"
       - "package-lock.json"
+      - "launch/**"
+      - "scripts/**"
+      - "scripts-*.cjs"
       - ".github/workflows/windows-packaging-validation.yml"
   workflow_dispatch:
 
@@ -26,12 +29,21 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Validate launcher PowerShell syntax
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          [void][scriptblock]::Create((Get-Content -Raw "launch/ServerProcess.ps1"))
+          Write-Host "Launcher PowerShell syntax is valid."
 
       - name: Install project dependencies
         run: npm ci
@@ -82,6 +94,15 @@ jobs:
 
       - name: Build Windows x64 installer
         run: npx electron-builder --win nsis --x64 --publish never --config electron-builder.yml
+
+      - name: Verify Prisma migration tooling is packaged
+        shell: pwsh
+        run: |
+          $prismaCli = Join-Path $PWD "release/win-unpacked/resources/app/node_modules/prisma/build/index.js"
+          $prismaConfig = Join-Path $PWD "release/win-unpacked/resources/app/prisma.config.ts"
+          if (-not (Test-Path $prismaCli)) { throw "Prisma CLI is missing from the packaged Electron application." }
+          if (-not (Test-Path $prismaConfig)) { throw "Prisma config is missing from the packaged Electron application." }
+          Write-Host "Packaged Prisma CLI and config are present."
 
       - name: Upload installer for inspection
         uses: actions/upload-artifact@v4

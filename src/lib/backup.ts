@@ -89,7 +89,7 @@ function cleanupOldBackups(): number {
   const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
   let removed = 0;
 
-  const entries = fs.readdirSync(dir).filter((f) => f.endsWith(".db"));
+  const entries = fs.readdirSync(dir).filter((filename) => backupDateFromFilename(filename) !== null);
   for (const filename of entries) {
     const full = path.join(dir, filename);
     const stat = fs.statSync(full);

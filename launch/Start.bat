@@ -4,6 +4,7 @@ setlocal
 title Cafe Panel - Server
 
 set "PROJECT_DIR=%~dp0.."
+set "LAUNCH_DIR=%~dp0"
 cd /d "%PROJECT_DIR%"
 
 echo.
@@ -40,21 +41,39 @@ if not exist ".next" (
   exit /b 1
 )
 
-REM --- Check port 3000 ---
-netstat -ano | findstr /R /C:":3000 .*LISTENING" >nul
-if not errorlevel 1 (
-  echo  [i] Server is already running.
-  echo      Opening browser...
-  start "" "http://localhost:3000"
-  timeout /t 2 /nobreak >nul
-  exit /b 0
+REM --- Verify whether Cafe Panel owns port 3000 ---
+powershell -ExecutionPolicy Bypass -NoProfile -File "%LAUNCH_DIR%ServerProcess.ps1" -Action status >nul
+set "SERVER_STATUS=%ERRORLEVEL%"
+if "%SERVER_STATUS%"=="0" goto already_running
+if "%SERVER_STATUS%"=="2" goto port_occupied
+if not "%SERVER_STATUS%"=="1" (
+  echo  [X] Could not check the server status safely.
+  pause
+  exit /b 1
 )
 
 REM --- Start server in new window ---
+:start_server
 echo  [i] Starting server (this may take a few seconds)...
 echo.
 
 start "Cafe Panel Server" cmd /k "cd /d ""%PROJECT_DIR%"" && npm run start"
+goto wait_for_server
+
+:already_running
+echo  [i] Cafe Panel is already running.
+echo      Opening browser...
+start "" "http://localhost:3000"
+timeout /t 2 /nobreak >nul
+exit /b 0
+
+:port_occupied
+echo  [X] Port 3000 is used by another process, not verified as Cafe Panel.
+echo      Close that application or change its port, then try again.
+pause
+exit /b 1
+
+:wait_for_server
 
 REM --- Wait for server to be ready ---
 set /a tries=0
@@ -63,9 +82,13 @@ set /a tries+=1
 if %tries% gtr 30 goto timeout
 
 timeout /t 1 /nobreak >nul
-netstat -ano | findstr /R /C:":3000 .*LISTENING" >nul
-if errorlevel 1 goto waitloop
+powershell -ExecutionPolicy Bypass -NoProfile -File "%LAUNCH_DIR%ServerProcess.ps1" -Action status >nul
+set "SERVER_STATUS=%ERRORLEVEL%"
+if "%SERVER_STATUS%"=="0" goto server_ready
+if "%SERVER_STATUS%"=="2" goto port_occupied
+goto waitloop
 
+:server_ready
 REM --- Open browser ---
 echo  [OK] Server is ready.
 echo  [i] Opening browser...

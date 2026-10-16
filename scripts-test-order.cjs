@@ -1,10 +1,10 @@
 ﻿const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const { PrismaClient } = require("@prisma/client");
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const { PrismaLibSql } = require("@prisma/adapter-libsql");
 
-const adapter = new PrismaBetterSqlite3({
-  url: `file:${path.join(process.cwd(), "data", "cafe.db")}`,
-});
+const dbPath = path.resolve(process.cwd(), "data", "cafe.db");
+const adapter = new PrismaLibSql({ url: pathToFileURL(dbPath).href });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
@@ -12,7 +12,7 @@ async function main() {
   console.log("MENU ITEMS:", menu.length);
 
   if (menu.length < 2) {
-    console.log("Need at least 2 menu items. Run scripts-seed.cjs first.");
+    console.log("Need at least 2 menu items. Run node scripts/seed-menu.cjs first.");
     return;
   }
 

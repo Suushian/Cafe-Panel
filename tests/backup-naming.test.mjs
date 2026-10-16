@@ -14,6 +14,9 @@ test("rejects unsupported names and malformed timestamps", () => {
   for (const name of [
     "other-2026-10-14.db",
     "cafe-2026-10-14_1023.db",
+    "cafe-2026-10-14_999999.db",
+    "cafe-2026-02-31.db",
+    "cafe-2026-13-01.db",
     "cafe-2026-10-14.db.bak",
     "../cafe-2026-10-14.db",
   ]) {

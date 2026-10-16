@@ -7,6 +7,7 @@ import type { ActionResult } from "@/lib/types";
 import { isOrderStatus, type OrderStatus } from "@/lib/order-status";
 import { isOrderType } from "@/lib/order-type";
 import { isDiscountType, computeDiscountAmount } from "@/lib/discount";
+import { isValidOrderTotal } from "@/lib/order-total";
 import { recordBusinessAudit } from "@/lib/logging/business-audit";
 import { logger } from "@/lib/logging";
 
@@ -76,7 +77,7 @@ function parseOrderForm(formData: FormData): ParseOrderResult {
   const discountValueRaw = Number(formData.get("discountValue") ?? 0);
   if (
     discountTypeRaw !== "none" &&
-    (!Number.isFinite(discountValueRaw) ||
+    (!Number.isSafeInteger(discountValueRaw) ||
       discountValueRaw < 0 ||
       discountValueRaw > 1_000_000_000)
   ) {
@@ -95,7 +96,7 @@ function parseOrderForm(formData: FormData): ParseOrderResult {
       orderType: orderTypeRaw,
       discountType: discountTypeRaw,
       discountValue:
-        discountTypeRaw === "none" ? 0 : Math.round(discountValueRaw),
+        discountTypeRaw === "none" ? 0 : discountValueRaw,
       customerId,
     },
   };
@@ -159,6 +160,11 @@ async function resolveOrder(input: OrderInput): Promise<
     (sum, l) => sum + l.unitPrice * l.quantity,
     0
   );
+
+  // Reject totals that cannot be stored in Prisma's signed 32-bit Int field.
+  if (!isValidOrderTotal(totalPrice)) {
+    return { error: "مجموع سفارش از محدوده مجاز بیشتر است." };
+  }
 
   const discountAmount = computeDiscountAmount(
     totalPrice,
@@ -236,6 +242,16 @@ export async function updateOrder(formData: FormData): Promise<ActionResult> {
 
   try {
     await prisma.$transaction(async (tx) => {
+      // Recheck inside the transaction to avoid editing an order that was paid
+      // or cancelled after the initial read above.
+      const currentOrder = await tx.order.findUnique({
+        where: { id: orderId },
+        select: { status: true },
+      });
+      if (!currentOrder || currentOrder.status !== "open") {
+        throw new Error("ORDER_NOT_EDITABLE");
+      }
+
       // Replace all items
       await tx.orderItem.deleteMany({ where: { orderId } });
 
@@ -260,6 +276,9 @@ export async function updateOrder(formData: FormData): Promise<ActionResult> {
     revalidatePath("/customers");
     return { success: true };
   } catch (err) {
+    if (err instanceof Error && err.message === "ORDER_NOT_EDITABLE") {
+      return { success: false, error: "این سفارش دیگر باز نیست و قابل ویرایش نیست." };
+    }
     logger.error("business.action.failed", "updateOrder failed", err, { action: "updateOrder" });
     return { success: false, error: "خطا در ویرایش سفارش. دوباره تلاش کن." };
   }

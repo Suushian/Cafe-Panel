@@ -1,10 +1,10 @@
 ﻿const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const { PrismaClient } = require("@prisma/client");
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const { PrismaLibSql } = require("@prisma/adapter-libsql");
 
-const adapter = new PrismaBetterSqlite3({
-  url: `file:${path.join(process.cwd(), "data", "cafe.db")}`,
-});
+const dbPath = path.resolve(process.cwd(), "data", "cafe.db");
+const adapter = new PrismaLibSql({ url: pathToFileURL(dbPath).href });
 const prisma = new PrismaClient({ adapter });
 
 const items = [
@@ -16,10 +16,13 @@ const items = [
 ];
 
 async function main() {
-  await prisma.menuItem.deleteMany();
-  for (const item of items) {
-    await prisma.menuItem.create({ data: item });
+  const existing = await prisma.menuItem.count();
+  if (existing > 0) {
+    console.log(`Seed skipped: database already contains ${existing} menu items. No existing data was changed.`);
+    return;
   }
+
+  await prisma.$transaction(items.map((item) => prisma.menuItem.create({ data: item })));
   const count = await prisma.menuItem.count();
   console.log("SEEDED:", count);
 }

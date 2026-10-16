@@ -30,7 +30,7 @@ where node >nul 2>&1
 if errorlevel 1 (
   echo  [X] Node.js is not installed.
   echo.
-  echo      Cafe Panel needs Node.js 20 or newer.
+  echo      Cafe Panel needs Node.js 22 or 24 LTS.
   echo.
   echo      Opening the download page in your browser...
   echo      After installing, close this window and run Install.bat again.
@@ -46,6 +46,20 @@ for /f "tokens=* usebackq" %%v in (`npm --version`) do set "NPM_VERSION=%%v"
 
 echo  [OK] Node.js: %NODE_VERSION%
 echo  [OK] npm: %NPM_VERSION%
+for /f "tokens=1 delims=." %%m in ('echo %NODE_VERSION:~1%') do set "NODE_MAJOR=%%m"
+if "%NODE_MAJOR%"=="22" (
+  echo  [OK] Supported Node.js major version.
+) else if "%NODE_MAJOR%"=="24" (
+  echo  [OK] Supported Node.js major version.
+) else (
+  echo.
+  echo  [X] Unsupported Node.js version: %NODE_VERSION%
+  echo      Install Node.js 22 or 24 LTS, then run Install.bat again.
+  echo.
+  start "" "https://nodejs.org/en/download"
+  pause
+  exit /b 1
+)
 echo.
 
 REM ============================================================
@@ -55,13 +69,13 @@ echo  [2/6] Installing dependencies...
 echo.
 
 if exist "node_modules" (
-  echo  [i] node_modules found. Running a quick update...
+  echo  [i] Existing node_modules will be replaced to match package-lock.json.
 ) else (
   echo  [i] First time setup. This may take a few minutes.
 )
 echo.
 
-call npm install
+call npm ci
 if errorlevel 1 (
   echo.
   echo  [X] Failed to install dependencies.

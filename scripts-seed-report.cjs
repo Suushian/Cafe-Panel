@@ -1,14 +1,16 @@
 ﻿const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const { PrismaClient } = require("@prisma/client");
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
-const adapter = new PrismaBetterSqlite3({ url: `file:${path.join(process.cwd(), "data", "cafe.db")}` });
+const { PrismaLibSql } = require("@prisma/adapter-libsql");
+
+const dbPath = path.resolve(process.cwd(), "data", "cafe.db");
+const adapter = new PrismaLibSql({ url: pathToFileURL(dbPath).href });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const menu = await prisma.menuItem.findMany();
-  if (menu.length < 3) { console.log("Seed menu first"); return; }
+  if (menu.length < 4) { console.log("Seed at least 4 menu items first"); return; }
 
-  const now = new Date();
   const scenarios = [
     { status: "paid", lines: [{ i: 0, q: 4 }, { i: 1, q: 3 }] },
     { status: "paid", lines: [{ i: 1, q: 2 }] },

@@ -35,7 +35,7 @@ export async function resetDatabase(
   confirmWord: string
 ): Promise<ResetResult> {
   if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
-  if (confirmWord.trim() !== CONFIRM_WORD) {
+  if (typeof confirmWord !== "string" || confirmWord.trim() !== CONFIRM_WORD) {
     logger.warn("maintenance.reset.rejected", "Database reset rejected because confirmation phrase did not match");
     await recordBusinessAudit({
       event: "maintenance.reset.rejected",
@@ -47,11 +47,18 @@ export async function resetDatabase(
     return { success: false, error: "کلمه‌ی تأیید اشتباه است." };
   }
 
-  const anythingSelected =
-    filters.orders ||
-    filters.customers ||
-    filters.menuItems ||
-    filters.sessions;
+  if (!filters || typeof filters !== "object" || Array.isArray(filters)) {
+    return { success: false, error: "انتخاب بخش‌های دیتابیس نامعتبر است." };
+  }
+
+  // Treat server-action input as untrusted runtime data despite the TypeScript type.
+  const selected: ResetFilters = {
+    orders: filters.orders === true,
+    customers: filters.customers === true,
+    menuItems: filters.menuItems === true,
+    sessions: filters.sessions === true,
+  };
+  const anythingSelected = Object.values(selected).some(Boolean);
 
   if (!anythingSelected) {
     return { success: false, error: "حداقل یک بخش را انتخاب کن." };
@@ -95,17 +102,17 @@ export async function resetDatabase(
 
   try {
     await prisma.$transaction(async (tx) => {
-      if (filters.orders) {
+      if (selected.orders) {
         const r = await tx.order.deleteMany();
         deleted.orders = r.count;
       }
 
-      if (filters.customers) {
+      if (selected.customers) {
         const r = await tx.customer.deleteMany();
         deleted.customers = r.count;
       }
 
-      if (filters.menuItems) {
+      if (selected.menuItems) {
         const usedIds = await tx.orderItem.findMany({
           select: { menuItemId: true },
           distinct: ["menuItemId"],
@@ -120,7 +127,7 @@ export async function resetDatabase(
         }
       }
 
-      if (filters.sessions) {
+      if (selected.sessions) {
         const r = await tx.session.deleteMany();
         deleted.sessions = r.count;
       }
@@ -133,17 +140,17 @@ export async function resetDatabase(
       result: "success",
       metadata: {
         selected: {
-          orders: filters.orders,
-          customers: filters.customers,
-          menuItems: filters.menuItems,
-          sessions: filters.sessions,
+          orders: selected.orders,
+          customers: selected.customers,
+          menuItems: selected.menuItems,
+          sessions: selected.sessions,
         },
         deleted,
         backupCreated: true,
       },
     });
     logger.warn("maintenance.reset.succeeded", "Database reset completed after automatic backup", {
-      selected: filters,
+      selected,
       deleted,
     });
 
@@ -154,13 +161,13 @@ export async function resetDatabase(
 
     return { success: true, backupFilename: backup.filename, deleted };
   } catch (error) {
-    logger.error("maintenance.reset.failed", "Database reset transaction failed", error, { selected: filters });
+    logger.error("maintenance.reset.failed", "Database reset transaction failed", error, { selected });
     await recordBusinessAudit({
       event: "maintenance.reset.failed",
       action: "reset",
       entityType: "Database",
       result: "failure",
-      metadata: { reason: "transaction_failed", selected: filters },
+      metadata: { reason: "transaction_failed", selected },
     });
     return {
       success: false,
