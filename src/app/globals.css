@@ -1263,3 +1263,88 @@
     transition: none;
   }
 }
+
+
+/* Shared dropdown, context-menu and listbox styling — Cafe Panel theme */
+:where(
+  [role="menu"],
+  [role="listbox"],
+  [data-radix-menu-content],
+  [data-radix-dropdown-menu-content],
+  [data-radix-select-content],
+  .dropdown-menu,
+  .menu-popover
+) {
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+:where(
+  [role="menu"] [role="menuitem"],
+  [role="listbox"] [role="option"],
+  [data-radix-menu-content] [role="menuitem"],
+  [data-radix-dropdown-menu-content] [role="menuitem"],
+  .dropdown-menu > *,
+  .menu-popover > *
+) {
+  border-radius: 0.65rem;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+:where(
+  [role="menu"] [role="menuitem"]:hover,
+  [role="menu"] [role="menuitem"]:focus-visible,
+  [role="listbox"] [role="option"]:hover,
+  [role="listbox"] [role="option"][aria-selected="true"],
+  [data-radix-menu-content] [role="menuitem"]:hover,
+  [data-radix-dropdown-menu-content] [role="menuitem"]:hover,
+  .dropdown-menu > *:hover,
+  .menu-popover > *:hover
+) {
+  color: var(--primary-deep);
+  background: var(--bg-2);
+}
+
+.dark :where(
+  [role="menu"],
+  [role="listbox"],
+  [data-radix-menu-content],
+  [data-radix-dropdown-menu-content],
+  [data-radix-select-content],
+  .dropdown-menu,
+  .menu-popover
+) {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.dark :where(
+  [role="menu"] [role="menuitem"]:hover,
+  [role="menu"] [role="menuitem"]:focus-visible,
+  [role="listbox"] [role="option"]:hover,
+  [role="listbox"] [role="option"][aria-selected="true"],
+  [data-radix-menu-content] [role="menuitem"]:hover,
+  [data-radix-dropdown-menu-content] [role="menuitem"]:hover,
+  .dropdown-menu > *:hover,
+  .menu-popover > *:hover
+) {
+  color: var(--primary-deep);
+  background: var(--bg-2);
+}
+
+/* Native form menus follow the same botanical palette and rounded controls. */
+select {
+  color: var(--text);
+  background-color: var(--surface);
+  border-color: var(--border);
+  border-radius: 0.875rem;
+}
+
+select:focus-visible {
+  border-color: var(--primary);
+}
