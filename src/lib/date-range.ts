@@ -1,7 +1,19 @@
 ﻿const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 export function isValidDateParam(value: string | null | undefined): value is string {
-  return typeof value === "string" && DATE_RE.test(value);
+  if (typeof value !== "string" || !DATE_RE.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > 31) return false;
+
+  // Date constructors normalize impossible dates (for example, February 31),
+  // so compare the calendar fields after constructing the date explicitly.
+  const parsed = new Date(0);
+  parsed.setHours(0, 0, 0, 0);
+  parsed.setFullYear(year, month - 1, day);
+  return parsed.getFullYear() === year &&
+    parsed.getMonth() === month - 1 &&
+    parsed.getDate() === day;
 }
 
 export function getTodayParam(): string {
