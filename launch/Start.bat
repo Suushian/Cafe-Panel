@@ -4,6 +4,7 @@ setlocal
 title Cafe Panel - Server
 
 set "PROJECT_DIR=%~dp0.."
+set "LAUNCH_DIR=%~dp0"
 cd /d "%PROJECT_DIR%"
 
 echo.
@@ -81,9 +82,13 @@ set /a tries+=1
 if %tries% gtr 30 goto timeout
 
 timeout /t 1 /nobreak >nul
-netstat -ano | findstr /R /C:":3000 .*LISTENING" >nul
-if errorlevel 1 goto waitloop
+powershell -ExecutionPolicy Bypass -NoProfile -File "%LAUNCH_DIR%ServerProcess.ps1" -Action status >nul
+set "SERVER_STATUS=%ERRORLEVEL%"
+if "%SERVER_STATUS%"=="0" goto server_ready
+if "%SERVER_STATUS%"=="2" goto port_occupied
+goto waitloop
 
+:server_ready
 REM --- Open browser ---
 echo  [OK] Server is ready.
 echo  [i] Opening browser...
