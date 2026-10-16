@@ -36,6 +36,13 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Validate launcher PowerShell syntax
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          [void][scriptblock]::Create((Get-Content -Raw "launch/ServerProcess.ps1"))
+          Write-Host "Launcher PowerShell syntax is valid."
+
       - name: Install project dependencies
         run: npm ci
 
