@@ -38,6 +38,16 @@ function Shell({ children }: { children: ReactNode }) {
     };
   }, [mobileOpen]);
 
+  // Allow keyboard users to dismiss the mobile drawer.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") closeMobile();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen, closeMobile]);
+
   function toggleCollapsed() {
     setCollapsed((prev) => {
       const next = !prev;
@@ -64,6 +74,7 @@ function Shell({ children }: { children: ReactNode }) {
             mobileOpen ? "pointer-events-auto" : "pointer-events-none"
           }`}
           aria-hidden={!mobileOpen}
+          inert={!mobileOpen}
         >
           {/* Backdrop */}
           <div
@@ -74,6 +85,9 @@ function Shell({ children }: { children: ReactNode }) {
           />
           {/* Panel (RTL: slide from right) */}
           <div
+            role={mobileOpen ? "dialog" : undefined}
+            aria-modal={mobileOpen ? true : undefined}
+            aria-label="منوی اصلی"
             className={`absolute inset-y-0 right-0 p-4 transition-transform ${
               mobileOpen ? "translate-x-0 duration-300" : "translate-x-full duration-200"
             } ease-out-expo`}
