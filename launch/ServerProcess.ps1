@@ -29,7 +29,7 @@ foreach ($listenerId in $listenerIds) {
     if (-not $processInfo) { break }
 
     $commandLine = [string]$processInfo.CommandLine
-    $containsProject = $commandLine.IndexOf($projectDir, [StringComparison]::OrdinalIgnoreCase) -ge 0
+    $containsProject = $commandLine.IndexOf($projectDir, [System.StringComparison]::OrdinalIgnoreCase) -ge 0
     $startsCafePanel = $commandLine -match '(?i)npm(?:\.cmd)?\s+run\s+start'
     if ($containsProject -and $startsCafePanel) {
       $rootId = [int]$processInfo.ProcessId
