@@ -11,7 +11,6 @@ async function main() {
   const menu = await prisma.menuItem.findMany();
   if (menu.length < 4) { console.log("Seed at least 4 menu items first"); return; }
 
-  const now = new Date();
   const scenarios = [
     { status: "paid", lines: [{ i: 0, q: 4 }, { i: 1, q: 3 }] },
     { status: "paid", lines: [{ i: 1, q: 2 }] },
