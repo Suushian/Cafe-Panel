@@ -132,7 +132,7 @@ export default function CustomerPicker({ customers, value, onChange }: Props) {
 
       {mounted && (
         <div
-          className={`absolute bottom-full mb-2 inset-x-0 card p-0 overflow-hidden z-30 origin-bottom transition-all ${
+          className={`dropdown-menu absolute bottom-full mb-2 inset-x-0 card p-0 overflow-hidden rounded-2xl shadow-lg z-30 origin-bottom transition-all ${
             visible
               ? "opacity-100 translate-y-0 scale-100 duration-300"
               : "opacity-0 translate-y-2 scale-95 duration-180"
