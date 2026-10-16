@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { verifySession } from "@/lib/auth";
 import type { ActionResult } from "@/lib/types";
 import { isOrderStatus, type OrderStatus } from "@/lib/order-status";
 import { isOrderType } from "@/lib/order-type";
@@ -171,6 +172,7 @@ async function resolveOrder(input: OrderInput): Promise<
 /* ---------- createOrder ---------- */
 
 export async function createOrder(formData: FormData): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   const parsed = parseOrderForm(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
 
@@ -206,6 +208,7 @@ export async function createOrder(formData: FormData): Promise<ActionResult> {
 /* ---------- updateOrder ---------- */
 
 export async function updateOrder(formData: FormData): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   const orderId = String(formData.get("orderId") ?? "").trim();
   if (!orderId) {
     return { success: false, error: "شناسه‌ی سفارش نامعتبر است." };
@@ -268,6 +271,7 @@ export async function updateOrderStatus(
   orderId: string,
   status: OrderStatus
 ): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   if (!orderId) return { success: false, error: "شناسه‌ی سفارش نامعتبر است." };
   if (!isOrderStatus(status)) {
     return { success: false, error: "وضعیت نامعتبر است." };

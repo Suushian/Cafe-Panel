@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { verifySession } from "@/lib/auth";
 import { createManualBackup } from "@/lib/backup";
 import type { ActionResult } from "@/lib/types";
 import { logger } from "@/lib/logging";
@@ -33,6 +34,7 @@ export async function resetDatabase(
   filters: ResetFilters,
   confirmWord: string
 ): Promise<ResetResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   if (confirmWord.trim() !== CONFIRM_WORD) {
     logger.warn("maintenance.reset.rejected", "Database reset rejected because confirmation phrase did not match");
     await recordBusinessAudit({

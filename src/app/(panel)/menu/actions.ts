@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { verifySession } from "@/lib/auth";
 import { CATEGORIES } from "@/lib/categories";
 import type { ActionResult } from "@/lib/types";
 import { recordBusinessAudit } from "@/lib/logging/business-audit";
@@ -52,6 +53,7 @@ function parseMenuItemForm(formData: FormData): ParseResult {
 }
 
 export async function createMenuItem(formData: FormData): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   const parsed = parseMenuItemForm(formData);
   if ("error" in parsed) return { success: false, error: parsed.error };
 
@@ -67,6 +69,7 @@ export async function createMenuItem(formData: FormData): Promise<ActionResult> 
 }
 
 export async function updateMenuItem(formData: FormData): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   const id = String(formData.get("id") ?? "").trim();
   if (!id) return { success: false, error: "شناسه‌ی آیتم نامعتبر است." };
 
@@ -88,6 +91,7 @@ export async function updateMenuItem(formData: FormData): Promise<ActionResult> 
 }
 
 export async function deleteMenuItem(id: string): Promise<ActionResult> {
+  if (!(await verifySession())) return { success: false, error: "نشست معتبر نیست. دوباره وارد شو." };
   if (!id) return { success: false, error: "شناسه‌ی آیتم نامعتبر است." };
 
   try {
