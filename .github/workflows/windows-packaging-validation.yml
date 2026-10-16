@@ -13,6 +13,9 @@ on:
       - "prisma.config.ts"
       - "package.json"
       - "package-lock.json"
+      - "launch/**"
+      - "scripts/**"
+      - "scripts-*.cjs"
       - ".github/workflows/windows-packaging-validation.yml"
   workflow_dispatch:
 
