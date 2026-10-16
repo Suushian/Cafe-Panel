@@ -6,7 +6,7 @@ import { verifySession } from "@/lib/auth";
 import type { ActionResult } from "@/lib/types";
 import { isOrderStatus, type OrderStatus } from "@/lib/order-status";
 import { isOrderType } from "@/lib/order-type";
-import { isDiscountType, computeDiscountAmount } from "@/lib/discount";
+import { isDiscountType, isValidDiscountValue, computeDiscountAmount } from "@/lib/discount";
 import { isValidOrderTotal } from "@/lib/order-total";
 import { recordBusinessAudit } from "@/lib/logging/business-audit";
 import { logger } from "@/lib/logging";
@@ -75,13 +75,13 @@ function parseOrderForm(formData: FormData): ParseOrderResult {
   }
 
   const discountValueRaw = Number(formData.get("discountValue") ?? 0);
-  if (
-    discountTypeRaw !== "none" &&
-    (!Number.isSafeInteger(discountValueRaw) ||
-      discountValueRaw < 0 ||
-      discountValueRaw > 1_000_000_000)
-  ) {
-    return { error: "مقدار تخفیف نامعتبر است." };
+  if (!isValidDiscountValue(discountTypeRaw, discountValueRaw)) {
+    return {
+      error:
+        discountTypeRaw === "percent" && discountValueRaw > 100
+          ? "تخفیف درصدی نمی‌تواند بیش از ۱۰۰ باشد."
+          : "مقدار تخفیف نامعتبر است.",
+    };
   }
 
   const customerIdRaw = String(formData.get("customerId") ?? "").trim();
