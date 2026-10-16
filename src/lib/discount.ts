@@ -12,6 +12,13 @@ export function isDiscountType(value: string): value is DiscountType {
   return (DISCOUNT_TYPES as readonly string[]).includes(value);
 }
 
+/** Validate values accepted by the server for each discount type. */
+export function isValidDiscountValue(type: DiscountType, value: number): boolean {
+  if (type === "none") return true;
+  if (!Number.isSafeInteger(value) || value < 0 || value > 1_000_000_000) return false;
+  return type !== "percent" || value <= 100;
+}
+
 /**
  * Compute the discount amount in tomans from a value and type.
  * Clamps to [0, subtotal].

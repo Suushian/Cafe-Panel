@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { formatPrice } from "@/lib/format";
 
 type Item = {
+  id: string;
   name: string;
   quantity: number;
   revenue: number;
@@ -50,7 +51,7 @@ export default function TopItemsTable({ items }: { items: Item[] }) {
 
           return (
             <div
-              key={item.name}
+              key={item.id}
               className="report-row px-5 py-4 flex flex-col gap-2"
               style={{ animationDelay: `${idx * 70}ms` }}
             >

@@ -3,6 +3,7 @@ import Header from "@/components/Header";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/format";
 import { getPayableAmount } from "@/lib/order-total";
+import { allocateNetLineAmounts } from "@/lib/revenue-allocation";
 import {
   isValidDateParam,
   getTodayParam,
@@ -64,21 +65,28 @@ export default async function ReportsPage({
 
   const itemAgg = new Map<
     string,
-    { name: string; quantity: number; revenue: number }
+    { id: string; name: string; quantity: number; revenue: number }
   >();
 
   for (const order of orders) {
-    for (const line of order.items) {
+    const allocatedRevenue = allocateNetLineAmounts(
+      order.items.map((line) => ({ gross: line.quantity * line.unitPrice })),
+      getPayableAmount(order.totalPrice, order.discountAmount)
+    );
+
+    for (const [index, line] of order.items.entries()) {
       const key = line.menuItemId;
+      const netRevenue = allocatedRevenue[index];
       const existing = itemAgg.get(key);
       if (existing) {
         existing.quantity += line.quantity;
-        existing.revenue += line.quantity * line.unitPrice;
+        existing.revenue += netRevenue;
       } else {
         itemAgg.set(key, {
+          id: key,
           name: "",
           quantity: line.quantity,
-          revenue: line.quantity * line.unitPrice,
+          revenue: netRevenue,
         });
       }
     }
@@ -207,7 +215,7 @@ export default async function ReportsPage({
       {/* Top items */}
       <section>
         <h2 className="text-sm font-medium text-text-muted mb-3">
-          آیتم‌های پرفروش
+          آیتم‌های پرفروش (درآمد خالص پس از تخفیف)
         </h2>
         {topItems.length === 0 ? (
           <EmptyState
