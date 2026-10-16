@@ -19,3 +19,20 @@ test("handles no-discount and validates discount types", () => {
   assert.equal(isDiscountType("percent"), true);
   assert.equal(isDiscountType("invalid"), false);
 });
+
+import { getPayableAmount, isValidOrderTotal, MAX_ORDER_TOTAL } from "../src/lib/order-total.ts";
+
+test("payable amount subtracts discount and never becomes negative", () => {
+  assert.equal(getPayableAmount(1200, 200), 1000);
+  assert.equal(getPayableAmount(1200, 0), 1200);
+  assert.equal(getPayableAmount(500, 900), 0);
+  assert.equal(getPayableAmount(0, 0), 0);
+});
+
+test("order totals respect SQLite signed 32-bit integer bounds", () => {
+  assert.equal(isValidOrderTotal(1), true);
+  assert.equal(isValidOrderTotal(MAX_ORDER_TOTAL), true);
+  assert.equal(isValidOrderTotal(0), false);
+  assert.equal(isValidOrderTotal(MAX_ORDER_TOTAL + 1), false);
+  assert.equal(isValidOrderTotal(1.5), false);
+});
