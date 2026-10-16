@@ -1,13 +1,17 @@
 ﻿const path = require("node:path");
+const { pathToFileURL } = require("node:url");
 const { PrismaClient } = require("@prisma/client");
-const { PrismaBetterSqlite3 } = require("@prisma/adapter-better-sqlite3");
+const { PrismaLibSql } = require("@prisma/adapter-libsql");
 
-const adapter = new PrismaBetterSqlite3({
-  url: `file:${path.join(process.cwd(), "data", "cafe.db")}`,
-});
+const dbPath = path.resolve(process.cwd(), "data", "cafe.db");
+const adapter = new PrismaLibSql({ url: pathToFileURL(dbPath).href });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
+  if (process.env.CAFE_PANEL_CONFIRM_CLEAR !== "YES") {
+    throw new Error("Refusing to clear data. Set CAFE_PANEL_CONFIRM_CLEAR=YES to confirm this destructive operation.");
+  }
+
   // 1. اول سفارشات (cascade روی OrderItem)
   const orders = await prisma.order.deleteMany();
   console.log("Orders deleted:", orders.count);
