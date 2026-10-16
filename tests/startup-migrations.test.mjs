@@ -9,6 +9,10 @@ test("development and production startup apply Prisma migrations before Next.js 
 
   assert.match(packageJson.scripts.predev, /prisma migrate deploy/);
   assert.match(packageJson.scripts.predev, /prisma generate/);
-  assert.match(packageJson.scripts.predev.indexOf("prisma migrate deploy") < packageJson.scripts.predev.indexOf("prisma generate") ? "true" : "false", /^true$/);
+  assert.ok(
+    packageJson.scripts.predev.indexOf("prisma migrate deploy") <
+      packageJson.scripts.predev.indexOf("prisma generate"),
+    "migrations must be applied before generating the Prisma client"
+  );
   assert.match(packageJson.scripts.prestart, /prisma migrate deploy/);
 });
