@@ -133,7 +133,7 @@ async function resolveOrder(input: OrderInput): Promise<
     where: { id: { in: ids } },
   });
 
-  if (menuItems.length !== ids.length) {
+  if (menuItems.length !== new Set(ids).size) {
     return { error: "برخی آیتم‌ها یافت نشدند." };
   }
 
