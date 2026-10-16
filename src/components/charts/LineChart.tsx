@@ -96,11 +96,11 @@ export default function LineChart({
       >
         <defs>
           <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#A67C5B" />
-            <stop offset="100%" stopColor="#6F4E37" />
+            <stop offset="0%" stopColor="#6F9279" />
+            <stop offset="100%" stopColor="#426B55" />
           </linearGradient>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#A67C5B" stopOpacity="0.28" />
+            <stop offset="0%" stopColor="#6F9279" stopOpacity="0.24" />
             <stop offset="100%" stopColor="#A67C5B" stopOpacity="0" />
           </linearGradient>
         </defs>
@@ -221,7 +221,7 @@ export default function LineChart({
 }
 
 function compactNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1000) return `${Math.round(n / 1000)}K`;
-  return String(n);
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString("fa-IR", { maximumFractionDigits: 1 })}م`;
+  if (n >= 1000) return `${Math.round(n / 1000).toLocaleString("fa-IR")}هزار`;
+  return n.toLocaleString("fa-IR");
 }
