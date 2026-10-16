@@ -78,8 +78,10 @@ export async function GET(request: Request) {
     );
   }
 
+  // Keep the exported total consistent with the per-order payable amount
+  // shown in OrderCard and the daily reports (never allow a negative payable).
   const totalRevenue = orders.reduce(
-    (sum, o) => sum + o.totalPrice - o.discountAmount,
+    (sum, order) => sum + Math.max(0, order.totalPrice - order.discountAmount),
     0
   );
 
