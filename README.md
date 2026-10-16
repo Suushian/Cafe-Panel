@@ -132,6 +132,7 @@ scripts\ — اسکریپت‌های توسعه
 
 ## برای توسعه‌دهنده
 
+```bash
 npm install
 npm run dev
 npm run lint
@@ -142,6 +143,9 @@ npm run start
 npx prisma migrate dev --name <name>
 npx prisma generate
 npx prisma studio
+```
+
+دستور `npm run dev` پیش از اجرای Next.js، مهاجرت‌های معوق Prisma را با `prisma migrate deploy` اعمال می‌کند. اگر اعمال مهاجرت شکست بخورد، سرور توسعه اجرا نمی‌شود و خطای مهاجرت در ترمینال نمایش داده می‌شود. این کار جدول‌های لازم مانند `Admin` را در دیتابیس درست ایجاد می‌کند و فایل دیتابیس را حذف یا بازسازی نمی‌کند.
 
 تکنولوژی: Next.js 16 + React 19 + TypeScript + Tailwind 3.4 + Prisma 7 + SQLite + bcryptjs + Lucide React
 
