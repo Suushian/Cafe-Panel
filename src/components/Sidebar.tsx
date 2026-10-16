@@ -51,7 +51,7 @@ export default function Sidebar({ collapsed, onToggle }: Props) {
   return (
     <>
       <aside
-        className={`card h-fit flex flex-col gap-4 transition-all duration-300 ease-out-expo ${
+        className={`panel-sidebar h-fit flex flex-col gap-4 transition-all duration-300 ease-out-expo ${
           collapsed ? "w-[76px] px-3 py-5" : "w-[240px] p-6"
         }`}
       >

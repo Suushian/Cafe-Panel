@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   Wallet,
@@ -9,6 +10,8 @@ import {
   Sparkles,
   TrendingUp,
   PieChart,
+  ArrowLeft,
+  ClipboardList,
 } from "lucide-react";
 import KpiCard from "./KpiCard";
 import LineChart from "@/components/charts/LineChart";
@@ -42,14 +45,14 @@ type Props = {
 };
 
 const CATEGORY_COLORS = [
-  "#6F4E37",
-  "#A67C5B",
-  "#C8956B",
-  "#8A6A52",
-  "#4A7C59",
-  "#9B3A2E",
-  "#3F2B1F",
-  "#D4A574",
+  "#426B55",
+  "#6F9279",
+  "#9BB7A2",
+  "#31523F",
+  "#B6C8A8",
+  "#7B8D62",
+  "#8A9C8D",
+  "#C5D4BE",
 ];
 
 export default function DashboardClient({
@@ -93,18 +96,18 @@ export default function DashboardClient({
   const centerValue = compactNumber(categoryTotal);
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-5">
       {/* Greeting banner */}
-      <div className="card flex items-center justify-between gap-4 animate-fade-up relative overflow-hidden">
+      <div className="card flex items-center justify-between gap-4 animate-fade-up relative overflow-hidden border border-primary/10">
         <div className="flex flex-col gap-1">
           <span className="text-sm text-text-muted">
             {mounted ? greeting : "سلام"}
           </span>
-          <h2 className="text-xl font-bold text-text tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-text tracking-tight">
             خوش آمدی، مدیر کافه
           </h2>
           <span className="text-xs text-text-soft mt-1">
-            امروز روز خوبی برای فروش بیشتر است
+            نمای کلی عملکرد کافه بر اساس اطلاعات ثبت‌شده
           </span>
         </div>
         <span className="flex items-center justify-center w-14 h-14 rounded-3xl bg-primary/10 text-primary shrink-0">
@@ -121,7 +124,7 @@ export default function DashboardClient({
       </div>
 
       {/* KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <KpiCard
           label="فروش امروز"
           value={todayRevenue}
@@ -136,7 +139,7 @@ export default function DashboardClient({
           value={todayOrders}
           icon={ReceiptText}
           tone="primary"
-          hint={openOrders > 0 ? `${openOrders} سفارش باز` : "بدون سفارش باز"}
+          hint={openOrders > 0 ? `${openOrders.toLocaleString("fa-IR")} سفارش باز` : "بدون سفارش باز"}
           index={1}
         />
         <KpiCard
@@ -153,11 +156,21 @@ export default function DashboardClient({
           icon={UtensilsCrossed}
           tone="primary"
           hint={
-            unavailableMenu > 0 ? `${unavailableMenu} ناموجود` : "همه موجود"
+            unavailableMenu > 0 ? `${unavailableMenu.toLocaleString("fa-IR")} ناموجود` : "همه موجود"
           }
           index={3}
         />
       </div>
+
+      {openOrders > 0 && (
+        <Link href="/orders" className="group flex items-center justify-between gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10">
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300"><ClipboardList size={17} /></span>
+            <span className="min-w-0"><span className="block text-sm font-semibold text-text">سفارش‌های در انتظار</span><span className="block text-xs text-text-muted">برای بررسی وضعیت سفارش‌های باز وارد بخش سفارش‌ها شوید.</span></span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-text">{openOrders.toLocaleString("fa-IR")}<ArrowLeft size={16} className="transition-transform group-hover:-translate-x-0.5" /></span>
+        </Link>
+      )}
 
       {/* Sales chart */}
       <section
@@ -187,7 +200,7 @@ export default function DashboardClient({
       </section>
 
       {/* Grid: donut + recent orders */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
         {/* Category donut */}
         <section
           className="card animate-fade-up"
@@ -235,7 +248,7 @@ export default function DashboardClient({
 }
 
 function compactNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1000) return `${Math.round(n / 1000)}K`;
-  return String(n);
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString("fa-IR", { maximumFractionDigits: 1 })} میلیون`;
+  if (n >= 1000) return `${Math.round(n / 1000).toLocaleString("fa-IR")} هزار`;
+  return n.toLocaleString("fa-IR");
 }

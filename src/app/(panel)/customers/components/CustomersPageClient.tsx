@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Phone, ReceiptText, Search, Users, X } from "lucide-react";
 import CustomerCard from "./CustomerCard";
 import EmptyState from "@/components/EmptyState";
 import PeopleIllustration from "@/components/illustrations/PeopleIllustration";
@@ -73,6 +73,20 @@ export default function CustomersPageClient({ customers, orderCounts }: Props) {
 
   return (
     <>
+      <section aria-label="خلاصه مشتریان" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        <article className="card flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-card-sm bg-primary/10 text-primary shrink-0"><Users size={19} /></span>
+          <div><p className="text-xs text-text-muted">کل مشتریان</p><p className="mt-1 text-xl font-bold text-text tabular-nums">{customers.length.toLocaleString("fa-IR")}</p></div>
+        </article>
+        <article className="card flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-card-sm bg-success/10 text-success shrink-0"><Phone size={19} /></span>
+          <div><p className="text-xs text-text-muted">دارای شماره تماس</p><p className="mt-1 text-xl font-bold text-text tabular-nums">{customers.filter((customer) => Boolean(customer.phone)).length.toLocaleString("fa-IR")}</p></div>
+        </article>
+        <article className="card flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-card-sm bg-sky-500/10 text-sky-600 shrink-0"><ReceiptText size={19} /></span>
+          <div><p className="text-xs text-text-muted">سفارش‌های مرتبط</p><p className="mt-1 text-xl font-bold text-text tabular-nums">{Object.values(orderCounts).reduce((sum, count) => sum + count, 0).toLocaleString("fa-IR")}</p></div>
+        </article>
+      </section>
       <div className="card mb-6 flex items-center gap-3 animate-fade-up group focus-within:border-primary/40 transition-colors">
         <span className="flex items-center justify-center w-8 h-8 rounded-2xl bg-primary/10 text-primary shrink-0 transition-transform group-focus-within:scale-105">
           <Search size={15} strokeWidth={2.4} />

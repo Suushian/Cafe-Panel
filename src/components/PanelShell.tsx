@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import PageTransition from "./PageTransition";
@@ -12,6 +12,7 @@ function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { open: mobileOpen, close: closeMobile } = useMobileMenu();
+  const wasMobileOpen = useRef(false);
 
   // Load collapsed state from localStorage
   useEffect(() => {
@@ -38,6 +39,55 @@ function Shell({ children }: { children: ReactNode }) {
     };
   }, [mobileOpen]);
 
+  // Move focus into the mobile drawer and restore it to the trigger on close.
+  useEffect(() => {
+    if (mobileOpen) {
+      const panel = document.getElementById("mobile-navigation-dialog");
+      const focusable = panel?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      (focusable ?? panel)?.focus();
+      wasMobileOpen.current = true;
+    } else if (wasMobileOpen.current) {
+      document.getElementById("mobile-menu-toggle")?.focus();
+      wasMobileOpen.current = false;
+    }
+  }, [mobileOpen]);
+
+  // Allow keyboard users to dismiss the mobile drawer.
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        closeMobile();
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+      const panel = document.getElementById("mobile-navigation-dialog");
+      const focusable = panel?.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable?.length) {
+        event.preventDefault();
+        panel?.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen, closeMobile]);
+
   function toggleCollapsed() {
     setCollapsed((prev) => {
       const next = !prev;
@@ -52,7 +102,7 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen p-4 lg:p-6">
-      <div className="max-w-6xl mx-auto flex gap-6 items-start">
+      <div className="panel-layout mx-auto flex gap-5 items-start">
         {/* Desktop sidebar */}
         <div className="hidden lg:block shrink-0">
           <Sidebar collapsed={collapsed} onToggle={toggleCollapsed} />
@@ -64,6 +114,7 @@ function Shell({ children }: { children: ReactNode }) {
             mobileOpen ? "pointer-events-auto" : "pointer-events-none"
           }`}
           aria-hidden={!mobileOpen}
+          inert={!mobileOpen}
         >
           {/* Backdrop */}
           <div
@@ -74,6 +125,11 @@ function Shell({ children }: { children: ReactNode }) {
           />
           {/* Panel (RTL: slide from right) */}
           <div
+            id="mobile-navigation-dialog"
+            role={mobileOpen ? "dialog" : undefined}
+            aria-modal={mobileOpen ? true : undefined}
+            aria-label="منوی اصلی"
+            tabIndex={-1}
             className={`absolute inset-y-0 right-0 p-4 transition-transform ${
               mobileOpen ? "translate-x-0 duration-300" : "translate-x-full duration-200"
             } ease-out-expo`}

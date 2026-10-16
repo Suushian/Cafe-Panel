@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatPrice, formatDateTime } from "@/lib/format";
+import { getPayableAmount } from "@/lib/order-total";
 import {
   STATUS_LABELS,
   STATUS_STYLES,
@@ -43,7 +44,7 @@ export default function OrderCard({ order, index = 0 }: Props) {
 
   const orderType = isOrderType(order.orderType) ? order.orderType : null;
   const hasDiscount = order.discountAmount > 0;
-  const finalPrice = Math.max(0, order.totalPrice - order.discountAmount);
+  const finalPrice = getPayableAmount(order.totalPrice, order.discountAmount);
 
   const itemCount = order.items.reduce((sum, i) => sum + i.quantity, 0);
   const isOpen = status === "open";

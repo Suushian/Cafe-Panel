@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formatPrice } from "@/lib/format";
 
 type Point = {
   label: string;
@@ -26,7 +25,7 @@ export default function LineChart({
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const width = 640; // viewBox width
 
-  const { maxV, minV, points, pathLine, pathArea, gridLines, yTicks } =
+  const { points, pathLine, pathArea, gridLines, yTicks } =
     useMemo(() => {
       const values = data.map((d) => d.value);
       const maxV = Math.max(...values, 1);
@@ -53,9 +52,11 @@ export default function LineChart({
         .join(" ");
 
       const pathArea =
-        pathLine +
-        ` L ${pts[pts.length - 1].x} ${height - PADDING.bottom}` +
-        ` L ${pts[0].x} ${height - PADDING.bottom} Z`;
+        pts.length > 0
+          ? pathLine +
+            ` L ${pts[pts.length - 1].x} ${height - PADDING.bottom}` +
+            ` L ${pts[0].x} ${height - PADDING.bottom} Z`
+          : "";
 
       const gridLines = [0, 0.25, 0.5, 0.75, 1].map((f) => {
         const y = PADDING.top + innerH * f;
@@ -68,8 +69,6 @@ export default function LineChart({
       }));
 
       return {
-        maxV: niceMax,
-        minV,
         points: pts,
         pathLine,
         pathArea,
@@ -87,8 +86,10 @@ export default function LineChart({
   }
 
   return (
-    <div className="relative w-full max-w-3xl" dir="ltr">
+    <div className="relative w-full min-w-0 max-w-none" dir="ltr">
       <svg
+        role="img"
+        aria-label="نمودار فروش روزانه"
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
         className="w-full block"
@@ -96,12 +97,12 @@ export default function LineChart({
       >
         <defs>
           <linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stopColor="#A67C5B" />
-            <stop offset="100%" stopColor="#6F4E37" />
+            <stop offset="0%" stopColor="#6F9279" />
+            <stop offset="100%" stopColor="#426B55" />
           </linearGradient>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#A67C5B" stopOpacity="0.28" />
-            <stop offset="100%" stopColor="#A67C5B" stopOpacity="0" />
+            <stop offset="0%" stopColor="#6F9279" stopOpacity="0.24" />
+            <stop offset="100%" stopColor="#6F9279" stopOpacity="0" />
           </linearGradient>
         </defs>
 
@@ -208,7 +209,7 @@ export default function LineChart({
         >
           <div className="bg-text text-surface text-xs rounded-xl px-2.5 py-1.5 shadow-lg whitespace-nowrap">
             <div className="font-bold tabular-nums">
-              {formatPrice(points[hoverIdx].value)}
+              {points[hoverIdx].value.toLocaleString("fa-IR")} {unitLabel}
             </div>
             <div className="opacity-80 text-2xs mt-0.5">
               {points[hoverIdx].label}
@@ -221,7 +222,7 @@ export default function LineChart({
 }
 
 function compactNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1000) return `${Math.round(n / 1000)}K`;
-  return String(n);
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString("fa-IR", { maximumFractionDigits: 1 })}م`;
+  if (n >= 1000) return `${Math.round(n / 1000).toLocaleString("fa-IR")}هزار`;
+  return n.toLocaleString("fa-IR");
 }

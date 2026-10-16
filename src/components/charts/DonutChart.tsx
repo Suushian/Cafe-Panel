@@ -144,7 +144,7 @@ export default function DonutChart({
       <ul className="flex flex-col gap-2 min-w-[140px] flex-1">
         {slices.map((s) => {
           const active = hoverIdx === s.index;
-          const pct = (s.fraction * 100).toFixed(0);
+          const pct = Math.round(s.fraction * 100).toLocaleString("fa-IR");
           return (
             <li
               key={s.index}

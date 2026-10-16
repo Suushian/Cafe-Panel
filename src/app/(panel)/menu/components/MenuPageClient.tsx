@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, X } from "lucide-react";
+import { CheckCircle2, Layers3, Search, X } from "lucide-react";
 import MenuItemCard from "./MenuItemCard";
 import EmptyState from "@/components/EmptyState";
 import CoffeeCup from "@/components/illustrations/CoffeeCup";
@@ -140,6 +140,20 @@ export default function MenuPageClient({ items }: { items: MenuItem[] }) {
 
   return (
     <>
+      <section aria-label="خلاصه منو" className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+        <article className="card flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-card-sm bg-primary/10 text-primary shrink-0"><Layers3 size={19} /></span>
+          <div><p className="text-xs text-text-muted">کل آیتم‌ها</p><p className="mt-1 text-xl font-bold text-text tabular-nums">{items.length.toLocaleString("fa-IR")}</p></div>
+        </article>
+        <article className="card flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-card-sm bg-success/10 text-success shrink-0"><CheckCircle2 size={19} /></span>
+          <div><p className="text-xs text-text-muted">قابل سفارش</p><p className="mt-1 text-xl font-bold text-text tabular-nums">{items.filter((item) => item.isAvailable).length.toLocaleString("fa-IR")}</p></div>
+        </article>
+        <article className="card flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-card-sm bg-amber-500/10 text-amber-600 shrink-0"><Search size={19} /></span>
+          <div><p className="text-xs text-text-muted">دسته‌بندی‌ها</p><p className="mt-1 text-xl font-bold text-text tabular-nums">{new Set(items.map((item) => item.category)).size.toLocaleString("fa-IR")}</p></div>
+        </article>
+      </section>
       {/* Search */}
       <div className="card mb-6 flex items-center gap-3 animate-fade-up group focus-within:border-primary/40 transition-colors">
         <span className="flex items-center justify-center w-8 h-8 rounded-2xl bg-primary/10 text-primary shrink-0 transition-transform group-focus-within:scale-105">
