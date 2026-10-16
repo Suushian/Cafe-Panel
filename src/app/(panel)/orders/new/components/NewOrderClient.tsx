@@ -107,6 +107,10 @@ export default function NewOrderClient({
   }, [subtotal, discountType, discountValue]);
 
   const finalPrice = Math.max(0, subtotal - discountAmount);
+  const unavailableCartCount = cart.filter((line) => {
+    const item = itemMap.get(line.menuItemId);
+    return item !== undefined && !item.isAvailable;
+  }).length;
 
   function addItem(id: string) {
     setCart((prev) => {
@@ -363,6 +367,7 @@ export default function NewOrderClient({
                 type="number"
                 inputMode="numeric"
                 min={0}
+                step={1}
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
                 placeholder={
@@ -406,13 +411,18 @@ export default function NewOrderClient({
             </div>
           </div>
 
+          {unavailableCartCount > 0 && (
+            <p className="alert-error">
+              {unavailableCartCount.toLocaleString("fa-IR")} آیتم از این سفارش دیگر موجود نیست. برای ذخیره، آن‌ها را از سبد حذف کن.
+            </p>
+          )}
           {error && <p className="alert-error">{error}</p>}
 
           {/* Submit button with success animation */}
           <RippleButton
             type="button"
             onClick={handleSubmit}
-            disabled={submitState !== "idle" || cart.length === 0}
+            disabled={submitState !== "idle" || cart.length === 0 || unavailableCartCount > 0}
             className={`w-full inline-flex items-center justify-center gap-2 transition-all duration-300 ease-out-expo ${
               submitState === "submitted"
                 ? "bg-success! text-white scale-[1.02] success-pulse"
