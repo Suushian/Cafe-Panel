@@ -10,7 +10,7 @@ export default function Header({
   title: string;
   action?: React.ReactNode;
 }) {
-  const { toggle } = useMobileMenu();
+  const { toggle, open } = useMobileMenu();
 
   return (
     <header className="card mb-6 flex items-center justify-between gap-3 animate-fade-down">
@@ -20,7 +20,9 @@ export default function Header({
           type="button"
           onClick={toggle}
           className="lg:hidden flex items-center justify-center w-9 h-9 rounded-card-sm bg-primary/10 text-primary hover:bg-primary/15 transition-colors shrink-0"
-          aria-label="باز کردن منو"
+          aria-label={open ? "بستن منو" : "باز کردن منو"}
+          aria-expanded={open}
+          aria-controls="mobile-navigation-dialog"
         >
           <Menu size={17} strokeWidth={2.2} />
         </button>
