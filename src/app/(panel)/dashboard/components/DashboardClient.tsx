@@ -139,7 +139,7 @@ export default function DashboardClient({
           value={todayOrders}
           icon={ReceiptText}
           tone="primary"
-          hint={openOrders > 0 ? `${openOrders} سفارش باز` : "بدون سفارش باز"}
+          hint={openOrders > 0 ? `${openOrders.toLocaleString("fa-IR")} سفارش باز` : "بدون سفارش باز"}
           index={1}
         />
         <KpiCard
@@ -156,7 +156,7 @@ export default function DashboardClient({
           icon={UtensilsCrossed}
           tone="primary"
           hint={
-            unavailableMenu > 0 ? `${unavailableMenu} ناموجود` : "همه موجود"
+            unavailableMenu > 0 ? `${unavailableMenu.toLocaleString("fa-IR")} ناموجود` : "همه موجود"
           }
           index={3}
         />
