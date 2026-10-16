@@ -87,8 +87,10 @@ export default function LineChart({
   }
 
   return (
-    <div className="relative w-full max-w-3xl" dir="ltr">
+    <div className="relative w-full min-w-0 max-w-none" dir="ltr">
       <svg
+        role="img"
+        aria-label="نمودار فروش روزانه"
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
         className="w-full block"
