@@ -124,7 +124,7 @@ Node.js is not installed: از nodejs.org LTS را نصب کن، ویندوز ر
 
 ## ساختار
 
-launch\ — Install.bat، Start.bat، Start-Silent.vbs، assets\cafe-panel.ico
+launch\ — Install.bat، Start.bat، Start-Silent.vbs، Stop.bat، assets\cafe-panel.ico
 src\ — کد برنامه
 prisma\ — schema و migrations
 data\ — cafe.db و backups\
