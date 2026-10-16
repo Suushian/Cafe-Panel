@@ -15,4 +15,5 @@ test("development and production startup apply Prisma migrations before Next.js 
     "migrations must be applied before generating the Prisma client"
   );
   assert.match(packageJson.scripts.prestart, /prisma migrate deploy/);
+  assert.match(packageJson.scripts.prebuild, /prisma generate/);
 });
