@@ -14,7 +14,6 @@ type Action = {
   href: string;
   label: string;
   icon: LucideIcon;
-  shortcut: string;
   highlight?: boolean;
 };
 
@@ -23,26 +22,22 @@ const ACTIONS: Action[] = [
     href: "/orders/new",
     label: "سفارش جدید",
     icon: Plus,
-    shortcut: "N",
     highlight: true,
   },
   {
     href: "/menu",
     label: "منو",
     icon: UtensilsCrossed,
-    shortcut: "G M",
   },
   {
     href: "/customers",
     label: "مشتریان",
     icon: Users,
-    shortcut: "G C",
   },
   {
     href: "/reports",
     label: "گزارش‌ها",
     icon: BarChart3,
-    shortcut: "G R",
   },
 ];
 
@@ -91,15 +86,7 @@ export default function QuickActions() {
                 {action.label}
               </span>
 
-              <kbd
-                className={`text-2xs font-mono px-1.5 py-0.5 rounded border transition-opacity ${
-                  action.highlight
-                    ? "border-primary/30 bg-primary/10 text-primary"
-                    : "border-border bg-surface text-text-soft"
-                }`}
-              >
-                {action.shortcut}
-              </kbd>
+
             </Link>
           );
         })}
