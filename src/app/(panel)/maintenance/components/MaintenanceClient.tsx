@@ -90,26 +90,32 @@ export default function MaintenanceClient() {
     setError(null);
     setResult(null);
 
-    const r = await resetDatabase(filters, confirmWord);
+    try {
+      const r = await resetDatabase(filters, confirmWord);
 
-    setPending(false);
-
-    if (r.success) {
-      setResult({
-        backupFilename: r.backupFilename,
-        deleted: r.deleted,
-      });
-      toast.push("عملیات با موفقیت اجرا شد.", "success");
-      setConfirmWord("");
-      setFilters({
-        orders: false,
-        customers: false,
-        menuItems: false,
-        sessions: false,
-      });
-    } else {
-      setError(r.error);
-      toast.push(r.error, "error");
+      if (r.success) {
+        setResult({
+          backupFilename: r.backupFilename,
+          deleted: r.deleted,
+        });
+        toast.push("عملیات با موفقیت اجرا شد.", "success");
+        setConfirmWord("");
+        setFilters({
+          orders: false,
+          customers: false,
+          menuItems: false,
+          sessions: false,
+        });
+      } else {
+        setError(r.error);
+        toast.push(r.error, "error");
+      }
+    } catch {
+      const message = "ارتباط با سرور برقرار نشد. وضعیت عملیات را بررسی کن و در صورت نیاز گزارش‌ها را ببین.";
+      setError(message);
+      toast.push(message, "error");
+    } finally {
+      setPending(false);
     }
   }
 
