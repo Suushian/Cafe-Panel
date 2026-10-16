@@ -1150,3 +1150,55 @@
     animation: none !important;
   }
 }
+
+/* Cafe Panel 2026 — calm botanical foundation */
+:root {
+  --bg: #f5f5ef;
+  --bg-2: #ecefe7;
+  --surface: #fffefa;
+  --surface-2: #f8f8f2;
+  --border: #e1e6dc;
+  --border-strong: #cbd5c8;
+  --primary: #426b55;
+  --primary-hover: #315641;
+  --primary-soft: #62846e;
+  --primary-deep: #213e30;
+  --primary-glow: #87a88d;
+  --primary-glow-15: rgba(66, 107, 85, 0.15);
+  --primary-glow-30: rgba(66, 107, 85, 0.30);
+  --accent-warm: #c69b70;
+  --accent-cream: #e9ddca;
+  --text: #202a23;
+  --text-muted: #737d72;
+  --text-soft: #a1aa9f;
+  --success: #397453;
+  --success-soft: #e3eee5;
+  --danger: #a4483d;
+  --danger-soft: #f6e8e4;
+  --shadow-card: 0 2px 5px rgba(36, 54, 41, 0.04), 0 8px 24px rgba(36, 54, 41, 0.035);
+  --shadow-card-hover: 0 12px 28px -10px rgba(36, 54, 41, 0.15), 0 4px 10px -5px rgba(36, 54, 41, 0.08);
+}
+.dark {
+  --bg: #151d18;
+  --bg-2: #1c2820;
+  --surface: #202b23;
+  --surface-2: #26332a;
+  --border: #34473a;
+  --border-strong: #48604d;
+  --primary: #8db79a;
+  --primary-hover: #a5c9ad;
+  --primary-soft: #70987b;
+  --primary-deep: #dcebe0;
+  --primary-glow: #8db79a;
+  --primary-glow-15: rgba(141, 183, 154, 0.18);
+  --primary-glow-30: rgba(141, 183, 154, 0.32);
+  --accent-warm: #c69b70;
+  --accent-cream: #34473a;
+  --text: #edf2eb;
+  --text-muted: #a9b7aa;
+  --text-soft: #7e9080;
+  --success: #8dbd9a;
+  --success-soft: #253a2c;
+  --danger: #e19a8d;
+  --danger-soft: #3b2926;
+}
