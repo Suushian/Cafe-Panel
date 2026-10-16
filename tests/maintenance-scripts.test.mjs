@@ -37,8 +37,8 @@ test("report seeding checks for every menu item it references", () => {
 test("Windows stop launcher only delegates to verified process ownership checks", () => {
   const stop = read("../launch/Stop.bat");
   const processHelper = read("../launch/ServerProcess.ps1");
-  assert.match(stop, /ServerProcess\\.ps1.*-Action stop/);
-  assert.match(processHelper, /IndexOf\\(\\$projectDir/);
-  assert.match(processHelper, /taskkill\\.exe \/T \/F \/PID \\$rootId/);
+  assert.match(stop, /ServerProcess\.ps1.*-Action stop/);
+  assert.match(processHelper, /IndexOf\(\$projectDir/);
+  assert.match(processHelper, /taskkill\.exe \/T \/F \/PID \$rootId/);
   assert.match(processHelper, /Refusing to stop it/);
 });
