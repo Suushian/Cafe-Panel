@@ -56,7 +56,7 @@ export default async function ReportsPage({
 
   const orderCount = orders.length;
   const totalRevenue = orders.reduce(
-    (sum, o) => sum + o.totalPrice - o.discountAmount,
+    (sum, order) => sum + Math.max(0, order.totalPrice - order.discountAmount),
     0
   );
   const avgOrder = orderCount > 0 ? Math.round(totalRevenue / orderCount) : 0;
