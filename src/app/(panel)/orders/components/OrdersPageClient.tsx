@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, ClipboardList, Clock3, Search, Wallet, X } from "lucide-react";
 import OrderCard from "./OrderCard";
-import { STATUS_LABELS, type OrderStatus } from "@/lib/order-status";
+import type { OrderStatus } from "@/lib/order-status";
 import { formatPrice } from "@/lib/format";
 
 type Order = {
