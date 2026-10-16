@@ -162,7 +162,17 @@ export default function DashboardClient({
         />
       </div>
 
-      {openOrders > 0 && (\n        <Link href="/orders" className="group flex items-center justify-between gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10">\n          <span className="flex min-w-0 items-center gap-3">\n            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300"><ClipboardList size={17} /></span>\n            <span className="min-w-0"><span className="block text-sm font-semibold text-text">سفارش‌های در انتظار</span><span className="block text-xs text-text-muted">برای بررسی وضعیت سفارش‌های باز وارد بخش سفارش‌ها شوید.</span></span>\n          </span>\n          <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-text">{openOrders.toLocaleString("fa-IR")}<ArrowLeft size={16} className="transition-transform group-hover:-translate-x-0.5" /></span>\n        </a>\n      )}\n\n      {/* Sales chart */}
+      {openOrders > 0 && (
+        <Link href="/orders" className="group flex items-center justify-between gap-3 rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 transition-colors hover:bg-amber-500/10">
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-700 dark:text-amber-300"><ClipboardList size={17} /></span>
+            <span className="min-w-0"><span className="block text-sm font-semibold text-text">سفارش‌های در انتظار</span><span className="block text-xs text-text-muted">برای بررسی وضعیت سفارش‌های باز وارد بخش سفارش‌ها شوید.</span></span>
+          </span>
+          <span className="flex shrink-0 items-center gap-2 text-sm font-bold text-text">{openOrders.toLocaleString("fa-IR")}<ArrowLeft size={16} className="transition-transform group-hover:-translate-x-0.5" /></span>
+        </a>
+      )}
+
+      {/* Sales chart */}
       <section
         className="card animate-fade-up"
         style={{ animationDelay: "300ms" }}
