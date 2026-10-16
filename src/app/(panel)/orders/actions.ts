@@ -296,13 +296,41 @@ export async function updateOrderStatus(
     return { success: false, error: "وضعیت نامعتبر است." };
   }
 
+  if (status !== "paid" && status !== "cancelled") {
+    return { success: false, error: "تغییر وضعیت به این مقدار مجاز نیست." };
+  }
+
   try {
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
+    // Enforce the state transition on the server, not only in the UI.
+    // An order can transition from open to paid/cancelled exactly once.
+    const result = await prisma.order.updateMany({
+      where: { id: orderId, status: "open" },
       data: { status },
     });
-    await recordBusinessAudit({ event: "order.status.updated", action: "update_status", entityType: "Order", entityId: updatedOrder.id, result: "success", changes: { status: updatedOrder.status } });
+
+    if (result.count === 0) {
+      const existing = await prisma.order.findUnique({
+        where: { id: orderId },
+        select: { id: true, status: true },
+      });
+      if (!existing) return { success: false, error: "سفارش یافت نشد." };
+      return {
+        success: false,
+        error: "این سفارش دیگر باز نیست و امکان تغییر وضعیت آن وجود ندارد.",
+      };
+    }
+
+    await recordBusinessAudit({
+      event: "order.status.updated",
+      action: "update_status",
+      entityType: "Order",
+      entityId: orderId,
+      result: "success",
+      changes: { status },
+    });
     revalidatePath("/orders");
+    revalidatePath("/reports");
+    revalidatePath("/dashboard");
     return { success: true };
   } catch (err) {
     logger.error("business.action.failed", "updateOrderStatus failed", err, { action: "updateOrderStatus" });
