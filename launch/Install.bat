@@ -46,7 +46,7 @@ for /f "tokens=* usebackq" %%v in (`npm --version`) do set "NPM_VERSION=%%v"
 
 echo  [OK] Node.js: %NODE_VERSION%
 echo  [OK] npm: %NPM_VERSION%
-for /f "tokens=1 delims=." %%m in ("%NODE_VERSION:~1%") do set "NODE_MAJOR=%%m"
+for /f "tokens=1 delims=." %%m in ('echo %NODE_VERSION:~1%') do set "NODE_MAJOR=%%m"
 if "%NODE_MAJOR%"=="22" (
   echo  [OK] Supported Node.js major version.
 ) else if "%NODE_MAJOR%"=="24" (
