@@ -46,9 +46,6 @@ export default async function EditOrderPage({
       quantity: line.quantity,
     }));
 
-  // If some original items are unavailable, we don't include them silently.
-  // (Alternative: show a warning; for MVP we skip.)
-
   const initialOrderType: OrderType = isOrderType(order.orderType)
     ? order.orderType
     : "dine_in";
