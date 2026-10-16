@@ -69,13 +69,13 @@ echo  [2/6] Installing dependencies...
 echo.
 
 if exist "node_modules" (
-  echo  [i] node_modules found. Running a quick update...
+  echo  [i] Existing node_modules will be replaced to match package-lock.json.
 ) else (
   echo  [i] First time setup. This may take a few minutes.
 )
 echo.
 
-call npm install
+call npm ci
 if errorlevel 1 (
   echo.
   echo  [X] Failed to install dependencies.
