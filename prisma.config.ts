@@ -7,7 +7,7 @@ fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 // Prisma CLI's SQLite schema engine expects a datasource URL with the
 // Windows drive path after "file:", rather than a file:// URL authority.
-const prismaDatasourceUrl = `file:${dbPath.replace(/\\\\/g, "/")}`;
+const prismaDatasourceUrl = \`file:\${dbPath.replace(/\\/g, "/")}\`;
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
