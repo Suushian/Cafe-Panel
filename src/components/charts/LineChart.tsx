@@ -101,7 +101,7 @@ export default function LineChart({
           </linearGradient>
           <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#6F9279" stopOpacity="0.24" />
-            <stop offset="100%" stopColor="#A67C5B" stopOpacity="0" />
+            <stop offset="100%" stopColor="#6F9279" stopOpacity="0" />
           </linearGradient>
         </defs>
 
