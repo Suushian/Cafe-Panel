@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { csvEscape } from "@/lib/csv";
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/auth";
 import {
@@ -8,14 +9,6 @@ import {
 } from "@/lib/date-range";
 
 export const dynamic = "force-dynamic";
-
-function csvEscape(value: string | number): string {
-  const s = String(value);
-  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
-}
 
 export async function GET(request: Request) {
   if (!(await verifySession())) {
