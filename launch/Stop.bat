@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal
-title Cafe Panel - Stop
+title Cafe Panel - Stop Server
 
 echo.
 echo  ============================================================
@@ -9,27 +9,24 @@ echo    Cafe Panel - Stop Server
 echo  ============================================================
 echo.
 
-echo  [i] Looking for Cafe Panel server on port 3000...
-echo.
+powershell -ExecutionPolicy Bypass -NoProfile -File "%~dp0ServerProcess.ps1" -Action stop
+set "RESULT=%ERRORLEVEL%"
 
-set "FOUND=0"
-for /f "tokens=5" %%a in ('netstat -ano ^| findstr /R /C:":3000 .*LISTENING"') do (
-  set "FOUND=1"
-  echo  [i] Found process with PID %%a
-  taskkill /F /PID %%a >nul 2>&1
-  if errorlevel 1 (
-    echo  [X] Failed to stop PID %%a
-  ) else (
-    echo  [OK] Stopped PID %%a
-  )
+if "%RESULT%"=="0" (
+  echo.
+  echo  [OK] Cafe Panel server stopped.
+) else if "%RESULT%"=="1" (
+  echo.
+  echo  [i] Cafe Panel is not running.
+) else if "%RESULT%"=="2" (
+  echo.
+  echo  [!] Port 3000 belongs to an unrecognized process.
+  echo      Nothing was stopped. This protects other applications.
+) else (
+  echo.
+  echo  [X] Could not stop Cafe Panel safely. Check permissions and logs.
 )
 
-if "%FOUND%"=="0" (
-  echo  [i] No Cafe Panel server is running.
-)
-
-echo.
-echo  Done.
 echo.
 timeout /t 3 /nobreak >nul
 exit /b 0
