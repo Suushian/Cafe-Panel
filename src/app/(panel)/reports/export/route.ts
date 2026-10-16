@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { csvEscape } from "@/lib/csv";
+import { getPayableAmount } from "@/lib/order-total";
 import { prisma } from "@/lib/prisma";
 import { verifySession } from "@/lib/auth";
 import {
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
 
   for (const order of orders) {
     const itemCount = order.items.reduce((s, i) => s + i.quantity, 0);
-    const finalPrice = Math.max(0, order.totalPrice - order.discountAmount);
+    const finalPrice = getPayableAmount(order.totalPrice, order.discountAmount);
     const itemsText = order.items
       .map((i) => `${i.menuItem.name} × ${i.quantity}`)
       .join(" | ");
@@ -81,7 +82,7 @@ export async function GET(request: Request) {
   // Keep the exported total consistent with the per-order payable amount
   // shown in OrderCard and the daily reports (never allow a negative payable).
   const totalRevenue = orders.reduce(
-    (sum, order) => sum + Math.max(0, order.totalPrice - order.discountAmount),
+    (sum, order) => sum + getPayableAmount(order.totalPrice, order.discountAmount),
     0
   );
 
