@@ -2,6 +2,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/format";
+import { getPayableAmount } from "@/lib/order-total";
 import {
   isValidDateParam,
   getTodayParam,
@@ -56,7 +57,7 @@ export default async function ReportsPage({
 
   const orderCount = orders.length;
   const totalRevenue = orders.reduce(
-    (sum, order) => sum + Math.max(0, order.totalPrice - order.discountAmount),
+    (sum, order) => sum + getPayableAmount(order.totalPrice, order.discountAmount),
     0
   );
   const avgOrder = orderCount > 0 ? Math.round(totalRevenue / orderCount) : 0;
