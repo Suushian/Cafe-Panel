@@ -8,9 +8,10 @@ export function allocateNetLineAmounts(
   payableTotal: number
 ): number[] {
   if (lines.length === 0) return [];
-  if (!Number.isSafeInteger(payableTotal) || payableTotal <= 0) {
-    return lines.map(() => 0);
+  if (!Number.isSafeInteger(payableTotal) || payableTotal < 0) {
+    throw new RangeError("Payable total must be a non-negative safe integer.");
   }
+  if (payableTotal === 0) return lines.map(() => 0);
 
   const grossTotal = lines.reduce((sum, line) => sum + line.gross, 0);
   if (
@@ -20,17 +21,27 @@ export function allocateNetLineAmounts(
   ) {
     throw new RangeError("Line gross amounts must be non-negative safe integers.");
   }
+  if (payableTotal > grossTotal) {
+    throw new RangeError("Payable total cannot exceed the sum of line gross amounts.");
+  }
 
-  const exactShares = lines.map((line) => (payableTotal * line.gross) / grossTotal);
-  const allocated = exactShares.map(Math.floor);
+  const denominator = BigInt(grossTotal);
+  const shares = lines.map((line, index) => {
+    const numerator = BigInt(payableTotal) * BigInt(line.gross);
+    return {
+      index,
+      amount: Number(numerator / denominator),
+      remainder: numerator % denominator,
+    };
+  });
+  const allocated = shares.map((share) => share.amount);
   let remainder = payableTotal - allocated.reduce((sum, amount) => sum + amount, 0);
 
-  const order = exactShares
-    .map((exact, index) => ({ index, fraction: exact - allocated[index] }))
-    .sort((a, b) => b.fraction - a.fraction || a.index - b.index);
-
+  const order = [...shares].sort(
+    (a, b) => (a.remainder === b.remainder ? a.index - b.index : a.remainder > b.remainder ? -1 : 1)
+  );
   for (let i = 0; i < remainder; i++) {
-    allocated[order[i % order.length].index] += 1;
+    allocated[order[i].index] += 1;
   }
 
   return allocated;
