@@ -52,7 +52,7 @@ function Shell({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen p-4 lg:p-6">
-      <div className="max-w-6xl mx-auto flex gap-6 items-start">
+      <div className="panel-layout mx-auto flex gap-5 items-start">
         {/* Desktop sidebar */}
         <div className="hidden lg:block shrink-0">
           <Sidebar collapsed={collapsed} onToggle={toggleCollapsed} />
