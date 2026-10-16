@@ -6,7 +6,7 @@
 
 ## شروع سریع
 
-اولین بار: `launch\Install.bat` را دابل‌کلیک کن.
+اولین بار: `launch\\Install.bat` را دابل‌کلیک کن.
 
 از این پس: آیکون Cafe Panel روی دسکتاپ را دابل‌کلیک کن.
 
@@ -28,7 +28,7 @@ Node.js 22 یا 24 LTS از nodejs.org (نسخه‌ی 26 پشتیبانی نمی
 
 اولین بار به /setup می‌روی. یک رمز عبور مدیر تعیین کن (حداقل ۶ کاراکتر).
 
-هشدار: رمز را نگه دار. اگر فراموش کنی، باید data\cafe.db را حذف کنی.
+هشدار: رمز را نگه دار. اگر فراموش کنی، باید data\\cafe.db را حذف کنی.
 
 ## امکانات
 
@@ -105,43 +105,48 @@ Node.js 22 یا 24 LTS از nodejs.org (نسخه‌ی 26 پشتیبانی نمی
 
 ## داده‌ها و پشتیبان
 
-داده‌ها: data\cafe.db (SQLite)
+داده‌ها: data\\cafe.db (SQLite)
 
-پشتیبان‌های خودکار: data\backups\cafe-YYYY-MM-DD.db
-پشتیبان‌های دستی: data\backups\cafe-YYYY-MM-DD_HHMMSS.db
+پشتیبان‌های خودکار: data\\backups\\cafe-YYYY-MM-DD.db
+پشتیبان‌های دستی: data\\backups\\cafe-YYYY-MM-DD_HHMMSS.db
 
-بازیابی دستی: ابتدا سرور را با launch\Stop.bat متوقف کن. از فایل فعلی data\cafe.db یک کپی خارج از پوشه‌ی برنامه نگه دار. فایل پشتیبان موردنظر را از data\backups\ به data\cafe.db کپی کن (فایل اصلی را بازنویسی کن، نه اینکه پشتیبان را از پوشه‌ی backups جابه‌جا کنی). سپس سرور را روشن کن و صفحه‌های سفارش‌ها، منو و گزارش‌ها را بررسی کن. اگر برنامه بالا نیامد، سرور را متوقف کن و کپی قبلی دیتابیس را برگردان. هرگز فایل دیتابیس را هنگام اجرای سرور جایگزین نکن.
+بازیابی دستی: ابتدا سرور را با launch\\Stop.bat متوقف کن. از فایل فعلی data\\cafe.db یک کپی خارج از پوشه‌ی برنامه نگه دار. فایل پشتیبان موردنظر را از data\\backups\\ به data\\cafe.db کپی کن (فایل اصلی را بازنویسی کن، نه اینکه پشتیبان را از پوشه‌ی backups جابه‌جا کنی). سپس سرور را روشن کن و صفحه‌های سفارش‌ها، منو و گزارش‌ها را بررسی کن. اگر برنامه بالا نیامد، سرور را متوقف کن و کپی قبلی دیتابیس را برگردان. هرگز فایل دیتابیس را هنگام اجرای سرور جایگزین نکن.
 
 ## عیب‌یابی
 
-پنل باز نمی‌شود: از Cafe Panel (Debug) استفاده کن. فایل launch\server.log را ببین.
+پنل باز نمی‌شود: از Cafe Panel (Debug) استفاده کن. فایل launch\\server.log را ببین.
 
 صفحه سفید: چند ثانیه صبر، F5. اگر ادامه داشت Stop و دوباره Cafe Panel.
 
-رمز را فراموش کردم: سرور را متوقف کن، data\cafe.db را حذف کن، دوباره اجرا کن.
+رمز را فراموش کردم: سرور را متوقف کن، data\\cafe.db را حذف کن، دوباره اجرا کن.
 
 Node.js is not installed: از nodejs.org LTS را نصب کن، ویندوز را ری‌استارت کن، Install.bat را دوباره اجرا کن.
 
 ## ساختار
 
-launch\ — Install.bat، Start.bat، Start-Silent.vbs، Stop.bat، assets\cafe-panel.ico
-src\ — کد برنامه
-prisma\ — schema و migrations
-data\ — cafe.db و backups\
-scripts\ — اسکریپت‌های توسعه
+launch\\ — Install.bat، Start.bat، Start-Silent.vbs، assets\\cafe-panel.ico
+src\\ — کد برنامه
+prisma\\ — schema و migrations
+data\\ — cafe.db و backups\\
+scripts\\ — اسکریپت‌های توسعه
 
 ## برای توسعه‌دهنده
 
-npm install
-npm run dev
-npm run lint
-npm test
-npm run typecheck
-npm run build
-npm run start
-npx prisma migrate dev --name <name>
-npx prisma generate
-npx prisma studio
+`npm install`
+
+`npm run dev` — پیش از اجرا، مهاجرت‌های Prisma اعمال و Prisma Client تولید می‌شود.
+
+`npm run start` — پیش از اجرای نسخه‌ی production، مهاجرت‌های Prisma اعمال می‌شوند.
+
+`npm run lint`
+`npm test`
+`npm run typecheck`
+`npm run build`
+`npx prisma migrate dev --name <name>`
+`npx prisma generate`
+`npx prisma studio`
+
+اگر اجرای مهاجرت با خطا متوقف شد، دیتابیس را حذف نکن؛ ابتدا وضعیت دیتابیس و گزارش Prisma را بررسی کن.
 
 تکنولوژی: Next.js 16 + React 19 + TypeScript + Tailwind 3.4 + Prisma 7 + SQLite + bcryptjs + Lucide React
 
