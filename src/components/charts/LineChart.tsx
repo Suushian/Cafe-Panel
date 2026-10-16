@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { formatPrice } from "@/lib/format";
 
 type Point = {
   label: string;
@@ -26,7 +25,7 @@ export default function LineChart({
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const width = 640; // viewBox width
 
-  const { maxV, minV, points, pathLine, pathArea, gridLines, yTicks } =
+  const { points, pathLine, pathArea, gridLines, yTicks } =
     useMemo(() => {
       const values = data.map((d) => d.value);
       const maxV = Math.max(...values, 1);
@@ -70,8 +69,6 @@ export default function LineChart({
       }));
 
       return {
-        maxV: niceMax,
-        minV,
         points: pts,
         pathLine,
         pathArea,
@@ -212,7 +209,7 @@ export default function LineChart({
         >
           <div className="bg-text text-surface text-xs rounded-xl px-2.5 py-1.5 shadow-lg whitespace-nowrap">
             <div className="font-bold tabular-nums">
-              {formatPrice(points[hoverIdx].value)}
+              {points[hoverIdx].value.toLocaleString("fa-IR")} {unitLabel}
             </div>
             <div className="opacity-80 text-2xs mt-0.5">
               {points[hoverIdx].label}
