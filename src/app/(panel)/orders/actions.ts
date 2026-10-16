@@ -7,6 +7,7 @@ import type { ActionResult } from "@/lib/types";
 import { isOrderStatus, type OrderStatus } from "@/lib/order-status";
 import { isOrderType } from "@/lib/order-type";
 import { isDiscountType, computeDiscountAmount } from "@/lib/discount";
+import { isValidOrderTotal } from "@/lib/order-total";
 import { recordBusinessAudit } from "@/lib/logging/business-audit";
 import { logger } from "@/lib/logging";
 
@@ -160,9 +161,8 @@ async function resolveOrder(input: OrderInput): Promise<
     0
   );
 
-  // Prisma Int fields are signed 32-bit integers. Reject an oversized subtotal
-  // before it reaches the database, where it would otherwise fail generically.
-  if (!Number.isSafeInteger(totalPrice) || totalPrice > 2_147_483_647) {
+  // Reject totals that cannot be stored in Prisma's signed 32-bit Int field.
+  if (!isValidOrderTotal(totalPrice)) {
     return { error: "مجموع سفارش از محدوده مجاز بیشتر است." };
   }
 
