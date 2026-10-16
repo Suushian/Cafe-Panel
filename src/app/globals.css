@@ -1210,8 +1210,6 @@
   max-width: 1600px;
 }
 .panel-sidebar {
-  width: 240px;
-  padding: 1.25rem;
   border-radius: 1.25rem;
   border: 1px solid rgba(203, 213, 200, 0.55);
   background: linear-gradient(165deg, #263d31 0%, #1d3026 100%);
