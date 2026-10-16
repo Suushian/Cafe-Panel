@@ -17,6 +17,7 @@ export default function Header({
       <div className="flex items-center gap-3 min-w-0">
         {/* Hamburger — only on mobile/tablet */}
         <button
+          id="mobile-menu-toggle"
           type="button"
           onClick={toggle}
           className="lg:hidden flex items-center justify-center w-9 h-9 rounded-card-sm bg-primary/10 text-primary hover:bg-primary/15 transition-colors shrink-0"
