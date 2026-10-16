@@ -28,8 +28,9 @@ export default async function EditOrderPage({
   if (order.status !== "open") redirect("/orders");
 
   const [items, customers] = await Promise.all([
+    // Include unavailable items so existing order lines remain visible in the cart.
+    // The editor requires the user to remove unavailable lines before saving.
     prisma.menuItem.findMany({
-      where: { isAvailable: true },
       orderBy: [{ category: "asc" }, { name: "asc" }],
     }),
     prisma.customer.findMany({
@@ -37,10 +38,9 @@ export default async function EditOrderPage({
     }),
   ]);
 
-  // Only keep items that are still available (for cart)
-  const availableIds = new Set(items.map((i) => i.id));
+  // Preserve every original line. Silently filtering unavailable lines here could
+  // delete historical order items when the user edits an unrelated field.
   const initialCart = order.items
-    .filter((line) => availableIds.has(line.menuItemId))
     .map((line) => ({
       menuItemId: line.menuItemId,
       quantity: line.quantity,
