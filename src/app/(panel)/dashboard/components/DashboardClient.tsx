@@ -248,7 +248,7 @@ export default function DashboardClient({
 }
 
 function compactNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-  if (n >= 1000) return `${Math.round(n / 1000)}K`;
-  return String(n);
+  if (n >= 1_000_000) return `${(n / 1_000_000).toLocaleString("fa-IR", { maximumFractionDigits: 1 })} میلیون`;
+  if (n >= 1000) return `${Math.round(n / 1000).toLocaleString("fa-IR")} هزار`;
+  return n.toLocaleString("fa-IR");
 }
