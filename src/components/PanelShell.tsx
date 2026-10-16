@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import Sidebar from "./Sidebar";
 import PageTransition from "./PageTransition";
@@ -12,6 +12,7 @@ function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const { open: mobileOpen, close: closeMobile } = useMobileMenu();
+  const wasMobileOpen = useRef(false);
 
   // Load collapsed state from localStorage
   useEffect(() => {
@@ -36,6 +37,21 @@ function Shell({ children }: { children: ReactNode }) {
     return () => {
       document.body.style.overflow = prev;
     };
+  }, [mobileOpen]);
+
+  // Move focus into the mobile drawer and restore it to the trigger on close.
+  useEffect(() => {
+    if (mobileOpen) {
+      const panel = document.getElementById("mobile-navigation-dialog");
+      const focusable = panel?.querySelector<HTMLElement>(
+        'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      (focusable ?? panel)?.focus();
+      wasMobileOpen.current = true;
+    } else if (wasMobileOpen.current) {
+      document.getElementById("mobile-menu-toggle")?.focus();
+      wasMobileOpen.current = false;
+    }
   }, [mobileOpen]);
 
   // Allow keyboard users to dismiss the mobile drawer.
@@ -89,6 +105,7 @@ function Shell({ children }: { children: ReactNode }) {
             role={mobileOpen ? "dialog" : undefined}
             aria-modal={mobileOpen ? true : undefined}
             aria-label="منوی اصلی"
+            tabIndex={-1}
             className={`absolute inset-y-0 right-0 p-4 transition-transform ${
               mobileOpen ? "translate-x-0 duration-300" : "translate-x-full duration-200"
             } ease-out-expo`}
