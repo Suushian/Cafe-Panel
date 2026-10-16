@@ -160,6 +160,12 @@ async function resolveOrder(input: OrderInput): Promise<
     0
   );
 
+  // Prisma Int fields are signed 32-bit integers. Reject an oversized subtotal
+  // before it reaches the database, where it would otherwise fail generically.
+  if (!Number.isSafeInteger(totalPrice) || totalPrice > 2_147_483_647) {
+    return { error: "مجموع سفارش از محدوده مجاز بیشتر است." };
+  }
+
   const discountAmount = computeDiscountAmount(
     totalPrice,
     input.discountType as "none" | "percent" | "amount",
